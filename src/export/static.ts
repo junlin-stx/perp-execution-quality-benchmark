@@ -139,7 +139,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     .muted { color: #6c747d; }
     .status { font-weight: 650; }
     .toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 14px; align-items: start; }
+    .comparison-grid { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
     .market-panel { background: #ffffff; border: 1px solid #d8d2c5; min-width: 0; }
     .market-panel h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 12px 14px; border-bottom: 1px solid #e8e2d6; background: #22333b; color: #ffffff; font-size: 18px; }
     .market-panel h2 span { color: #dce8e4; font-size: 12px; font-weight: 600; }

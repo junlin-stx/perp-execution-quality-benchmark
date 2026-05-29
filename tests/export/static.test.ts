@@ -113,7 +113,7 @@ describe("static export", () => {
     db.close();
   });
 
-  it("includes responsive metric labels so narrow screens do not hide comparison columns", () => {
+  it("renders comparison panels in a single column with responsive metric labels", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
@@ -124,7 +124,8 @@ describe("static export", () => {
     expect(index).toContain("\"100k Slippage\"");
     expect(index).toContain("\"1M Slippage\"");
     expect(index).toContain("td::before");
-    expect(index).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr))");
+    expect(index).toContain(".comparison-grid { display: grid; grid-template-columns: 1fr;");
+    expect(index).not.toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr))");
     db.close();
   });
 
