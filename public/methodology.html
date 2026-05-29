@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Methodology - Perp Execution Quality Benchmark</title>
+  <style>
+    body { margin: 0; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #1d2329; background: #f7f4ee; }
+    main { max-width: 900px; margin: 0 auto; padding: 32px; background: #ffffff; min-height: 100vh; }
+    h1, h2 { letter-spacing: 0; }
+    p, li { line-height: 1.6; color: #34404a; }
+    code { background: #f0eee8; padding: 2px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Methodology</h1>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Binance Perps, Aevo, and StandX on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or StandX marketing page.</p>
+
+  <h2>Data Sources</h2>
+  <ul>
+    <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
+    <li>Binance Perps: <code>GET https://fapi.binance.com/fapi/v1/depth</code> for USD-M futures. Binance RPI liquidity is not included in this public book.</li>
+    <li>Aevo: <code>GET https://api.aevo.xyz/orderbook</code> by <code>instrument_name</code>.</li>
+    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
+  </ul>
+
+  <h2>Cadence</h2>
+  <p>The collector runs every 30 to 60 seconds. The default is 60 seconds. Static public artifacts are exported every 5 minutes.</p>
+
+  <h2>Spread</h2>
+  <p><code>mid = (best_bid + best_ask) / 2</code></p>
+  <p><code>spread_bp = ((best_ask - best_bid) / mid) * 10000</code></p>
+
+  <h2>10bp Depth</h2>
+  <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - 0.001)</code>.</p>
+  <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + 0.001)</code>.</p>
+  <p>The public table shows total 10bp depth while JSON keeps side breakdowns.</p>
+
+  <h2>100,000 USD Estimated Taker Slippage</h2>
+  <p>A buy order consumes asks from best ask upward until 100,000 USD is filled. A sell order consumes bids from best bid downward. If the returned public book cannot fill 100,000 USD on either side, the metric is marked insufficient public depth.</p>
+  <p><code>buy_slippage_bp = ((buy_avg_px - mid) / mid) * 10000</code></p>
+  <p><code>sell_slippage_bp = ((mid - sell_avg_px) / mid) * 10000</code></p>
+
+  <h2>Comparability Limits</h2>
+  <ul>
+    <li>Only public order book data is used.</li>
+    <li>Hidden, private, or venue-internal liquidity is not measured.</li>
+    <li>Hyperliquid public books are limited to 20 levels per side.</li>
+    <li>Binance RPI orders are not represented in the public depth endpoint.</li>
+    <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
+  </ul>
+</main>
+</body>
+</html>
