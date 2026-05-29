@@ -68,4 +68,18 @@ describe("static export", () => {
     expect(index).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr))");
     db.close();
   });
+
+  it("temporarily hides SOL from the public page while keeping SOL data exported", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    const latest = readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8");
+    expect(index).toContain("const visibleMarkets = [\"BTC\", \"ETH\"]");
+    expect(index).toContain("markets.filter((market) => visibleMarkets.includes(market))");
+    expect(latest).toContain("\"market\": \"SOL\"");
+    db.close();
+  });
 });

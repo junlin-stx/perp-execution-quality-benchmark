@@ -109,6 +109,7 @@ function indexHtml(): string {
   <script>
     const venues = ["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"];
     const markets = ["BTC", "ETH", "SOL"];
+    const visibleMarkets = ["BTC", "ETH"];
     const labels = { hyperliquid: "Hyperliquid", binance_perps: "Binance Perps", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
@@ -127,7 +128,7 @@ function indexHtml(): string {
       });
 
     function renderComparison(latest, rowMap) {
-      document.getElementById("comparison").innerHTML = markets.map((market) => {
+      document.getElementById("comparison").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
         const rows = venues.map((venue) => {
           const target = latest.targets.find((item) => item.venue === venue && item.market === market);
           const row = rowMap.get(venue + ":" + market);
@@ -196,7 +197,7 @@ function indexHtml(): string {
     }
 
     function renderSummaries(summaries) {
-      const rows = Array.isArray(summaries) ? summaries.slice(0, 6) : [];
+      const rows = Array.isArray(summaries) ? summaries.filter((row) => visibleMarkets.includes(row.market)).slice(0, 6) : [];
       document.getElementById("summary-note").textContent = rows.length
         ? rows.length + " latest UTC daily summaries."
         : "No daily summary has been generated yet.";
@@ -210,7 +211,7 @@ function indexHtml(): string {
       document.getElementById("history-note").textContent = validRows.length
         ? validRows.length + " valid metric samples in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
-      document.getElementById("history").innerHTML = markets.map((market) => {
+      document.getElementById("history").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
         const rows = validRows.filter((row) => row.market === market);
         return "<div class='history-panel'>" +
           "<h3>" + market + "</h3>" +
