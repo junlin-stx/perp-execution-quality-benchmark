@@ -1,0 +1,7 @@
+node_modules/
+dist/
+data/*.sqlite
+data/*.sqlite-*
+data/debug-books/
+public/data/*.json
+.DS_Store
