@@ -1,5 +1,16 @@
-import { describe, expect, it } from "vitest";
-import { buildDailySummaryText } from "../../src/summary/daily.js";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
+import { buildDailySummaryText, generateDailySummaries } from "../../src/summary/daily.js";
+import { BenchmarkDb } from "../../src/storage/sqlite.js";
+
+let tempDir: string | undefined;
+
+afterEach(() => {
+  if (tempDir) rmSync(tempDir, { recursive: true, force: true });
+  tempDir = undefined;
+});
 
 describe("daily summary", () => {
   it("ranks venues by median 100k slippage and states not-listed markets", () => {
@@ -18,5 +29,57 @@ describe("daily summary", () => {
       { venue: "standx", market: "SOL", medianSlippageBp: null, status: "not_listed" }
     ]);
     expect(text).toContain("StandX SOL was not listed");
+  });
+
+  it("uses median slippage instead of average when aggregating SQLite rows", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-summary-"));
+    const db = new BenchmarkDb(join(tempDir, "summary.sqlite"));
+    db.initialize();
+    const utcDate = "2026-05-28";
+    const times = [
+      Date.parse("2026-05-28T01:00:00.000Z"),
+      Date.parse("2026-05-28T02:00:00.000Z"),
+      Date.parse("2026-05-28T03:00:00.000Z")
+    ];
+
+    for (const [index, slippage] of [1, 100, 101].entries()) {
+      const snapshotId = db.insertSnapshot({
+        venue: "binance_perps",
+        market: "BTC",
+        symbol: "BTCUSDT",
+        source: "fixture",
+        localTimestampMs: times[index],
+        sourceTimestampMs: null,
+        latencyMs: 1,
+        bidCount: 1,
+        askCount: 1,
+        isPartial: false,
+        status: "ok",
+        error: null
+      });
+      db.insertMetrics(snapshotId, {
+        venue: "binance_perps",
+        market: "BTC",
+        symbol: "BTCUSDT",
+        localTimestampMs: times[index],
+        midPrice: 100,
+        spreadBp: 1,
+        depth10BpBidUsd: 1000,
+        depth10BpAskUsd: 1000,
+        depth10BpTotalUsd: 2000,
+        buySlippage100kBp: slippage,
+        sellSlippage100kBp: slippage,
+        avgSlippage100kBp: slippage,
+        insufficientDepth100k: false,
+        valid: true,
+        error: null
+      });
+    }
+
+    const [btcSummary] = generateDailySummaries(db, utcDate);
+
+    expect(btcSummary).toContain("Binance Perps best at 100.00 bp");
+    expect(btcSummary).not.toContain("67.33 bp");
+    db.close();
   });
 });

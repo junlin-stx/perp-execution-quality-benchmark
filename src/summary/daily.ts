@@ -48,24 +48,46 @@ export function generateDailySummaries(db: BenchmarkDb, utcDate: string): string
   const summaries: string[] = [];
 
   for (const market of markets) {
-    const rows = raw.prepare(`
-      select venue, market, avg(avg_slippage_100k_bp) as medianSlippageBp, 'listed' as status
+    const metricRows = raw.prepare(`
+      select venue, market, avg_slippage_100k_bp as slippage
       from execution_metrics
       where market = ?
         and local_timestamp_ms >= ?
         and local_timestamp_ms < ?
         and avg_slippage_100k_bp is not null
         and insufficient_depth_100k = 0
-      group by venue, market
-      union all
+    `).all(market, startMs, endMs) as unknown as Array<{ venue: Venue; market: Market; slippage: number }>;
+    const listedRows = [...groupByVenue(metricRows).entries()].map(([venue, values]) => ({
+      venue,
+      market,
+      medianSlippageBp: median(values),
+      status: "listed" as const
+    }));
+    const notListedRows = raw.prepare(`
       select venue, market, null as medianSlippageBp, status
       from venue_market_status
       where market = ? and status = 'not_listed'
-    `).all(market, startMs, endMs, market) as unknown as DailyVenueMetric[];
+    `).all(market) as unknown as DailyVenueMetric[];
+    const rows = [...listedRows, ...notListedRows];
     const text = buildDailySummaryText(utcDate, market, rows);
     db.upsertDailySummary(utcDate, market, text);
     summaries.push(text);
   }
 
   return summaries;
+}
+
+function groupByVenue(rows: Array<{ venue: Venue; slippage: number }>): Map<Venue, number[]> {
+  const grouped = new Map<Venue, number[]>();
+  for (const row of rows) {
+    grouped.set(row.venue, [...(grouped.get(row.venue) ?? []), row.slippage]);
+  }
+  return grouped;
+}
+
+function median(values: number[]): number | null {
+  const sorted = values.filter((value) => Number.isFinite(value)).sort((a, b) => a - b);
+  if (!sorted.length) return null;
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 1 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
 }
