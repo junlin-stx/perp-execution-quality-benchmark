@@ -28,16 +28,21 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: the public repository includes `LICENSE`.
 
 2. Deploy `public/` to a static host.
+   - Status: complete.
    - Acceptable hosts: GitHub Pages, Cloudflare Pages, Vercel static, Netlify static, or an equivalent static host.
-   - Evidence: public URL serves `index.html`.
-   - Evidence: public URL serves `methodology.html`.
-   - Evidence: public URL serves `data/latest.json`.
+   - Evidence: public URL is `https://junlin-stx.github.io/perp-execution-quality-benchmark/`.
+   - Evidence: public URL serves `index.html` with `Perp Execution Quality` and `7 Day History`.
+   - Evidence: public URL serves `methodology.html` with the metric formulas and comparability limits.
+   - Evidence: public URL serves `data/latest.json` with 12 targets.
 
 3. Run the collector/export loop.
+   - Status: complete for GitHub Actions Pages workflow.
    - Command: `npm run run:benchmark`
    - Evidence: `public/data/latest.json` updates every 5 minutes.
    - Evidence: `public/data/history-7d.json` grows over time.
    - Evidence: `data/benchmark.sqlite` is stored on persistent disk.
+   - Evidence: workflow `Benchmark Pages` run `26623179905` completed successfully.
+   - Evidence: workflow file `.github/workflows/benchmark-pages.yml` uses a 5 minute cron and `actions/cache` for `data/benchmark.sqlite`.
 
 4. Create the Telegram anomaly channel.
    - Evidence: `TELEGRAM_CHAT_ID` points to the public channel.
@@ -70,7 +75,6 @@ rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|wh
 
 ## Current External-State Gaps
 
-- No public static deployment URL is configured yet.
 - No Telegram bot token or channel id is configured in this workspace.
 
 ## Deployment Note

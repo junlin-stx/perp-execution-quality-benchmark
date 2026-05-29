@@ -3,6 +3,7 @@
 Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, and StandX.
 
 Public repo: https://github.com/junlin-stx/perp-execution-quality-benchmark
+Public benchmark: https://junlin-stx.github.io/perp-execution-quality-benchmark/
 
 The first phase compares BTC, ETH, and SOL using:
 
@@ -70,7 +71,7 @@ The sender reads `public/data/anomalies.json` and only sends execution quality a
 
 ## Launch Status
 
-Local collector, methodology, static page, daily summary generation, and Telegram anomaly sender are implemented. The public git repository is live. Public launch still requires static hosting for `public/` and Telegram channel credentials.
+Local collector, methodology, static page, daily summary generation, and Telegram anomaly sender are implemented. The public git repository and GitHub Pages benchmark are live. Public launch still requires Telegram channel credentials.
 
 See `docs/release-checklist.md`.
 See `docs/deployment.md` for the persistent deployment runbook.
