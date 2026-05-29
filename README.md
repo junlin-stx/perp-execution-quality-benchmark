@@ -66,6 +66,12 @@ npm run telegram:send-anomalies
 
 The sender reads `public/data/anomalies.json` and only sends execution quality anomaly messages that were already exported. It does not send alpha, liquidation, whale, vault, or trading-signal content.
 
+## Launch Status
+
+Local collector, methodology, static page, daily summary generation, and Telegram anomaly sender are implemented. Public launch still requires a public git remote, static hosting for `public/`, and Telegram channel credentials.
+
+See `docs/release-checklist.md`.
+
 ## Methodology
 
 See `public/methodology.html` after running the static export, and `docs/superpowers/specs/2026-05-29-perp-execution-quality-benchmark-design.md` for the design.
