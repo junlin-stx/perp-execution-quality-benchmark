@@ -1,5 +1,6 @@
 import { runCollectionRound } from "../collector/run.js";
 import { exportLatestData, exportStaticSite } from "../export/static.js";
+import { publishR2Data, publishR2Latest } from "../publish/r2.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 import { shouldRunScheduledTask } from "./schedule.js";
 
@@ -21,6 +22,7 @@ const latestExportIntervalSeconds = parsePositiveNumber("--latest-export-interva
 const historyExportIntervalSeconds = parsePositiveNumber("--history-export-interval", optionValue("--export-interval", "300"));
 const concurrency = parsePositiveNumber("--concurrency", "4");
 const once = process.argv.includes("--once");
+const publishR2 = process.argv.includes("--publish-r2");
 let lastLatestExportMs: number | null = null;
 let lastHistoryExportMs: number | null = null;
 
@@ -41,11 +43,19 @@ try {
 
     if (shouldExportHistory) {
       exportStaticSite(db, outDir);
+      if (publishR2) {
+        const uploaded = await publishR2Data(outDir);
+        console.log(`uploaded ${uploaded.length} data files to R2`);
+      }
       lastHistoryExportMs = nowMs;
       lastLatestExportMs = nowMs;
       console.log(`exported static benchmark to ${outDir}`);
     } else if (shouldRunScheduledTask({ lastRunMs: lastLatestExportMs, nowMs, intervalSeconds: latestExportIntervalSeconds })) {
       exportLatestData(db, outDir);
+      if (publishR2) {
+        const uploaded = await publishR2Latest(outDir);
+        console.log(`uploaded ${uploaded.length} latest data file to R2`);
+      }
       lastLatestExportMs = nowMs;
       console.log(`exported latest data to ${outDir}`);
     }

@@ -53,6 +53,40 @@ Defaults:
 - write SQLite data to `data/benchmark.sqlite`
 - write static artifacts to `public/`
 
+## Publish Data to Cloudflare R2
+
+Configure an R2 bucket with S3 API credentials:
+
+```bash
+export R2_ACCOUNT_ID="..."
+export R2_ACCESS_KEY_ID="..."
+export R2_SECRET_ACCESS_KEY="..."
+export R2_BUCKET="perp-bench"
+export R2_PREFIX="" # optional, for example "perp-bench"
+```
+
+Upload the current `public/data/*.json` files:
+
+```bash
+npm run publish:r2
+```
+
+Or publish continuously from the local collector:
+
+```bash
+npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4 --publish-r2
+```
+
+R2 object keys are `data/latest.json`, `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json`, optionally prefixed by `R2_PREFIX`.
+
+To make the public page read JSON from R2 instead of the same static host:
+
+```bash
+PUBLIC_DATA_BASE_URL="https://<r2-public-domain>/<optional-prefix>" npm run export
+```
+
+For GitHub Pages, set repository variables `PUBLIC_DATA_BASE_URL`, `R2_ACCOUNT_ID`, `R2_BUCKET`, and optional `R2_PREFIX`, plus repository secrets `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`.
+
 ## Telegram Anomaly Channel
 
 Dry-run anomaly detection never sends messages:

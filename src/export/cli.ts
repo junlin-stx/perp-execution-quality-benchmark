@@ -8,9 +8,10 @@ function optionValue(name: string, fallback: string): string {
 
 const dbPath = optionValue("--db", "data/benchmark.sqlite");
 const outDir = optionValue("--out", "public");
+const dataBaseUrl = optionValue("--data-base-url", process.env.PUBLIC_DATA_BASE_URL ?? "");
 
 const db = new BenchmarkDb(dbPath);
 db.initialize();
-exportStaticSite(db, outDir);
+exportStaticSite(db, outDir, { dataBaseUrl });
 db.close();
 console.log(`exported static benchmark to ${outDir}`);

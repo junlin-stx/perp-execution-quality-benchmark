@@ -62,6 +62,74 @@ Realtime tuning:
 npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4
 ```
 
+## Cloudflare R2 Data Publishing
+
+Use R2 as the public data layer while keeping SQLite as the local source of truth. Create an R2 bucket, enable public access through a custom domain or the development `r2.dev` URL, and create an R2 S3 API token with Object Read & Write permission for the bucket.
+
+Required environment:
+
+```bash
+export R2_ACCOUNT_ID="..."
+export R2_ACCESS_KEY_ID="..."
+export R2_SECRET_ACCESS_KEY="..."
+export R2_BUCKET="perp-bench"
+export R2_PREFIX="" # optional
+```
+
+Upload data once:
+
+```bash
+npm run publish:r2
+```
+
+Run the realtime collector and publish R2 data after exports:
+
+```bash
+npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4 --publish-r2
+```
+
+Render the static page so it fetches public JSON from the R2 public domain:
+
+```bash
+PUBLIC_DATA_BASE_URL="https://<r2-public-domain>/<optional-prefix>" npm run export
+```
+
+For GitHub Pages, configure repository variables:
+
+- `PUBLIC_DATA_BASE_URL`
+- `R2_ACCOUNT_ID`
+- `R2_BUCKET`
+- `R2_PREFIX` if objects are written under a prefix
+
+Configure repository secrets:
+
+- `R2_ACCESS_KEY_ID`
+- `R2_SECRET_ACCESS_KEY`
+
+The GitHub Pages workflow uses `PUBLIC_DATA_BASE_URL` when rendering the page and publishes the exported JSON to R2 when all R2 variables and secrets are present. The long-running local collector should remain the primary realtime publisher; the workflow upload is only a fallback snapshot because scheduled GitHub Actions are not a strict 5 minute realtime system.
+
+Set a CORS policy on the R2 bucket so GitHub Pages can fetch JSON from the R2 domain:
+
+```json
+[
+  {
+    "AllowedOrigins": [
+      "https://junlin-stx.github.io",
+      "http://localhost:4173"
+    ],
+    "AllowedMethods": ["GET"],
+    "MaxAgeSeconds": 3600
+  }
+]
+```
+
+After changing CORS on a custom R2 domain, purge that hostname from Cloudflare Cache before testing in the browser.
+
+Published object keys:
+
+- `data/latest.json` with `Cache-Control: public, max-age=30, must-revalidate`
+- `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json` with `Cache-Control: public, max-age=300, must-revalidate`
+
 ## Static Serving
 
 Serve the output directory as a static site. The public URL must serve:

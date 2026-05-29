@@ -28,10 +28,10 @@ describe("static export", () => {
     expect(index).toContain("edgeX");
     expect(index).toContain("validCount + \"/\" + venues.length + \" live</span>");
     expect(index).toContain("7 Day History");
-    expect(index).toContain("data/history-7d.json");
+    expect(index).toContain('dataUrl("history-7d.json")');
     expect(index).toContain("id=\"history\"");
     expect(index).toContain("Daily Summary");
-    expect(index).toContain("data/daily-summary.json");
+    expect(index).toContain('dataUrl("daily-summary.json")');
     expect(index).toContain("id=\"daily-summary\"");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
     expect(methodology).toContain("100,000 USD");
@@ -198,6 +198,18 @@ describe("static export", () => {
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("setInterval(refreshLatest, 60_000)");
     expect(index).toContain("function refreshLatest()");
+    db.close();
+  });
+
+  it("can render the public page to read data from an external base url", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"), { dataBaseUrl: "https://data.example.com/perp" });
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain('const dataBaseUrl = "https://data.example.com/perp";');
+    expect(index).toContain('fetch(dataUrl("latest.json"))');
     db.close();
   });
 });

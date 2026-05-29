@@ -3,11 +3,15 @@ import { join } from "node:path";
 import { collectionTargets, venues } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
-export function exportStaticSite(db: BenchmarkDb, outputDir = "public"): void {
+export interface StaticSiteOptions {
+  dataBaseUrl?: string;
+}
+
+export function exportStaticSite(db: BenchmarkDb, outputDir = "public", options: StaticSiteOptions = {}): void {
   exportLatestData(db, outputDir);
   exportHistoryData(db, outputDir);
   exportSummaryData(db, outputDir);
-  writeFileSync(join(outputDir, "index.html"), indexHtml(), "utf8");
+  writeFileSync(join(outputDir, "index.html"), indexHtml(options), "utf8");
   writeFileSync(join(outputDir, "methodology.html"), methodologyHtml(), "utf8");
 }
 
@@ -111,7 +115,8 @@ function median(values: Array<number | null>): number | null {
   return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
 }
 
-function indexHtml(): string {
+function indexHtml(options: StaticSiteOptions = {}): string {
+  const dataBaseUrl = options.dataBaseUrl?.replace(/\/+$/g, "") ?? "";
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -194,12 +199,14 @@ function indexHtml(): string {
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
     const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
+    const dataBaseUrl = ${JSON.stringify(dataBaseUrl)};
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
+    const dataUrl = (name) => dataBaseUrl ? dataBaseUrl + "/data/" + name : "data/" + name;
 
     Promise.all([
-      fetch("data/latest.json").then((response) => response.json()),
-      fetch("data/history-7d.json").then((response) => response.json()),
-      fetch("data/daily-summary.json").then((response) => response.json())
+      fetch(dataUrl("latest.json")).then((response) => response.json()),
+      fetch(dataUrl("history-7d.json")).then((response) => response.json()),
+      fetch(dataUrl("daily-summary.json")).then((response) => response.json())
     ])
       .then(([latest, history, summaries]) => {
         renderLatest(latest);
@@ -209,7 +216,7 @@ function indexHtml(): string {
       });
 
     function refreshLatest() {
-      fetch("data/latest.json?ts=" + Date.now())
+      fetch(dataUrl("latest.json") + "?ts=" + Date.now())
         .then((response) => response.json())
         .then((latest) => renderLatest(latest));
     }

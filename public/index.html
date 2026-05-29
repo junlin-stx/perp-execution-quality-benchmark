@@ -80,12 +80,14 @@
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
     const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
+    const dataBaseUrl = "";
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
+    const dataUrl = (name) => dataBaseUrl ? dataBaseUrl + "/data/" + name : "data/" + name;
 
     Promise.all([
-      fetch("data/latest.json").then((response) => response.json()),
-      fetch("data/history-7d.json").then((response) => response.json()),
-      fetch("data/daily-summary.json").then((response) => response.json())
+      fetch(dataUrl("latest.json")).then((response) => response.json()),
+      fetch(dataUrl("history-7d.json")).then((response) => response.json()),
+      fetch(dataUrl("daily-summary.json")).then((response) => response.json())
     ])
       .then(([latest, history, summaries]) => {
         renderLatest(latest);
@@ -95,7 +97,7 @@
       });
 
     function refreshLatest() {
-      fetch("data/latest.json?ts=" + Date.now())
+      fetch(dataUrl("latest.json") + "?ts=" + Date.now())
         .then((response) => response.json())
         .then((latest) => renderLatest(latest));
     }
