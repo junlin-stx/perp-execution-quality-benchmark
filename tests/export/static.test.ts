@@ -93,6 +93,21 @@ describe("static export", () => {
     db.close();
   });
 
+  it("sorts market tables by 10bp depth while keeping reference venues separate", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain("const benchmarkRows = sortRowsByDepth(rows.filter((item) => !item.reference))");
+    expect(index).toContain("const referenceRows = sortRowsByDepth(rows.filter((item) => item.reference))");
+    expect(index).toContain("const sortedRows = benchmarkRows.concat(referenceRows)");
+    expect(index).toContain("function sortRowsByDepth(rows)");
+    expect(index).toContain('metricValue(right, "depth_10bp_total_usd")');
+    db.close();
+  });
+
   it("includes responsive metric labels so narrow screens do not hide comparison columns", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));

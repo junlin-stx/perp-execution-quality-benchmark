@@ -243,7 +243,9 @@ function indexHtml(options: StaticSiteOptions = {}): string {
           const status = notListed ? "N/A: not listed" : (row?.status ?? "no sample");
           return { venue, target, row, notListed, reference, status: reference ? status + " - Reference" : status };
         });
-        const benchmarkRows = rows.filter((item) => !item.reference);
+        const benchmarkRows = sortRowsByDepth(rows.filter((item) => !item.reference));
+        const referenceRows = sortRowsByDepth(rows.filter((item) => item.reference));
+        const sortedRows = benchmarkRows.concat(referenceRows);
         const spreadBest = metricBest(benchmarkRows, "spread_bp", "low");
         const spreadWorst = metricBest(benchmarkRows, "spread_bp", "high");
         const depthBest = metricBest(benchmarkRows, "depth_10bp_total_usd", "high");
@@ -258,7 +260,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
           "<table><thead><tr>" +
             "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
           "</tr></thead><tbody>" +
-          rows.map((item) => {
+          sortedRows.map((item) => {
             const rowClass = item.notListed ? " class='na-row'" : (item.reference ? " class='reference-row'" : "");
             return "<tr" + rowClass + ">" +
               "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
@@ -296,6 +298,14 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       const values = rows.map((item) => metricValue(item, key)).filter((value) => value !== null);
       if (!values.length) return null;
       return direction === "low" ? Math.min(...values) : Math.max(...values);
+    }
+
+    function sortRowsByDepth(rows) {
+      return rows.slice().sort((left, right) => {
+        const leftDepth = metricValue(left, "depth_10bp_total_usd") ?? -1;
+        const rightDepth = metricValue(right, "depth_10bp_total_usd") ?? -1;
+        return rightDepth - leftDepth;
+      });
     }
 
     function spreadDelta(value, best) {
