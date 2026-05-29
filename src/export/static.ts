@@ -56,7 +56,7 @@ function indexHtml(): string {
     header { padding: 28px 32px 18px; background: #ffffff; border-bottom: 1px solid #d8d2c5; }
     h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
     p { margin: 0; line-height: 1.5; color: #4c5560; }
-    main { padding: 24px 32px 40px; max-width: 1280px; margin: 0 auto; }
+    main { padding: 24px 32px 40px; max-width: 1440px; margin: 0 auto; }
     table { border-collapse: collapse; width: 100%; }
     th, td { padding: 10px 12px; border-bottom: 1px solid #e8e2d6; text-align: left; font-size: 14px; vertical-align: top; }
     th { color: #59636d; font-size: 12px; font-weight: 700; text-transform: uppercase; }
@@ -64,7 +64,7 @@ function indexHtml(): string {
     .muted { color: #6c747d; }
     .status { font-weight: 650; }
     .toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 14px; align-items: start; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr)); gap: 14px; align-items: start; }
     .market-panel { background: #ffffff; border: 1px solid #d8d2c5; min-width: 0; }
     .market-panel h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 12px 14px; border-bottom: 1px solid #e8e2d6; background: #22333b; color: #ffffff; font-size: 18px; }
     .market-panel h2 span { color: #dce8e4; font-size: 12px; font-weight: 600; }
@@ -99,7 +99,7 @@ function indexHtml(): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -156,11 +156,13 @@ function indexHtml(): string {
         const depthWorst = metricBest(rows, "depth_10bp_total_usd", "low");
         const slipBest = metricBest(rows, "avg_slippage_100k_bp", "low");
         const slipWorst = metricBest(rows, "avg_slippage_100k_bp", "high");
+        const slip1mBest = metricBest(rows, "avg_slippage_1m_bp", "low");
+        const slip1mWorst = metricBest(rows, "avg_slippage_1m_bp", "high");
         const validCount = rows.filter((item) => metricValue(item, "spread_bp") !== null).length;
         return "<article class='market-panel'>" +
           "<h2>" + market + "<span>" + validCount + "/" + venues.length + " live</span></h2>" +
           "<table><thead><tr>" +
-            "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th>" +
+            "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
           "</tr></thead><tbody>" +
           rows.map((item) => {
             const rowClass = item.notListed ? " class='na-row'" : "";
@@ -170,6 +172,7 @@ function indexHtml(): string {
               metricCell(item, "spread_bp", "Spread", "bp", spreadBest, spreadWorst, spreadDelta) +
               metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthWorst, depthRatio) +
               metricCell(item, "avg_slippage_100k_bp", "100k Slippage", "bp", slipBest, slipWorst, spreadDelta) +
+              metricCell(item, "avg_slippage_1m_bp", "1M Slippage", "bp", slip1mBest, slip1mWorst, spreadDelta) +
             "</tr>";
           }).join("") +
           "</tbody></table>" +
@@ -235,6 +238,7 @@ function indexHtml(): string {
             "<dt>Median spread</dt><dd>" + fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp</dd>" +
             "<dt>Median 10bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_10bp_total_usd)), 0) + "</dd>" +
             "<dt>Median 100k slippage</dt><dd>" + fmt(median(rows.map((row) => row.avg_slippage_100k_bp)), 3) + " bp</dd>" +
+            "<dt>Median 1M slippage</dt><dd>" + fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp</dd>" +
           "</dl>" +
         "</div>";
       }).join("");
@@ -295,8 +299,9 @@ function methodologyHtml(): string {
   <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + 0.001)</code>.</p>
   <p>The public table shows total 10bp depth while JSON keeps side breakdowns.</p>
 
-  <h2>100,000 USD Estimated Taker Slippage</h2>
-  <p>A buy order consumes asks from best ask upward until 100,000 USD is filled. A sell order consumes bids from best bid downward. If the returned public book cannot fill 100,000 USD on either side, the metric is marked insufficient public depth.</p>
+  <h2>100,000 and 1,000,000 USD Estimated Taker Slippage</h2>
+  <p>A buy order consumes asks from best ask upward until the target notional is filled. A sell order consumes bids from best bid downward. The public table shows both 100,000 USD and 1,000,000 USD average taker slippage.</p>
+  <p>If the returned public book cannot fill the target notional on either side, that target-size metric is marked insufficient public depth and displayed as <code>N/A</code>.</p>
   <p><code>buy_slippage_bp = ((buy_avg_px - mid) / mid) * 10000</code></p>
   <p><code>sell_slippage_bp = ((mid - sell_avg_px) / mid) * 10000</code></p>
 

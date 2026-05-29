@@ -40,6 +40,10 @@ export interface ExecutionMetrics {
   sellSlippage100kBp: number | null;
   avgSlippage100kBp: number | null;
   insufficientDepth100k: boolean;
+  buySlippage1mBp: number | null;
+  sellSlippage1mBp: number | null;
+  avgSlippage1mBp: number | null;
+  insufficientDepth1m: boolean;
   valid: boolean;
   error: string | null;
 }

@@ -71,6 +71,10 @@ describe("daily summary", () => {
         sellSlippage100kBp: slippage,
         avgSlippage100kBp: slippage,
         insufficientDepth100k: false,
+        buySlippage1mBp: slippage,
+        sellSlippage1mBp: slippage,
+        avgSlippage1mBp: slippage,
+        insufficientDepth1m: false,
         valid: true,
         error: null
       });

@@ -9,7 +9,7 @@ The first phase compares BTC, ETH, and SOL using:
 
 - spread
 - 10bp depth
-- estimated slippage for a 100,000 USD taker order
+- estimated slippage for 100,000 USD and 1,000,000 USD taker orders
 
 This is not a trading signal, paid product, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.
 

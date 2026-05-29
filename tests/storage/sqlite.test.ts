@@ -45,10 +45,16 @@ describe("BenchmarkDb", () => {
       sellSlippage100kBp: 3,
       avgSlippage100kBp: 2.5,
       insufficientDepth100k: false,
+      buySlippage1mBp: 7,
+      sellSlippage1mBp: 8,
+      avgSlippage1mBp: 7.5,
+      insufficientDepth1m: false,
       valid: true,
       error: null
     });
-    expect(db.getLatestGrid()).toHaveLength(2);
+    const latest = db.getLatestGrid();
+    expect(latest).toHaveLength(2);
+    expect(JSON.stringify(latest)).toContain("avg_slippage_1m_bp");
     db.close();
   });
 });

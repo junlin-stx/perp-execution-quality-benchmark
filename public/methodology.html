@@ -41,8 +41,9 @@
   <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + 0.001)</code>.</p>
   <p>The public table shows total 10bp depth while JSON keeps side breakdowns.</p>
 
-  <h2>100,000 USD Estimated Taker Slippage</h2>
-  <p>A buy order consumes asks from best ask upward until 100,000 USD is filled. A sell order consumes bids from best bid downward. If the returned public book cannot fill 100,000 USD on either side, the metric is marked insufficient public depth.</p>
+  <h2>100,000 and 1,000,000 USD Estimated Taker Slippage</h2>
+  <p>A buy order consumes asks from best ask upward until the target notional is filled. A sell order consumes bids from best bid downward. The public table shows both 100,000 USD and 1,000,000 USD average taker slippage.</p>
+  <p>If the returned public book cannot fill the target notional on either side, that target-size metric is marked insufficient public depth and displayed as <code>N/A</code>.</p>
   <p><code>buy_slippage_bp = ((buy_avg_px - mid) / mid) * 10000</code></p>
   <p><code>sell_slippage_bp = ((mid - sell_avg_px) / mid) * 10000</code></p>
 

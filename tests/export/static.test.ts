@@ -33,7 +33,9 @@ describe("static export", () => {
     expect(index).toContain("Daily Summary");
     expect(index).toContain("data/daily-summary.json");
     expect(index).toContain("id=\"daily-summary\"");
-    expect(readFileSync(join(tempDir, "public", "methodology.html"), "utf8")).toContain("100,000 USD");
+    const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
+    expect(methodology).toContain("100,000 USD");
+    expect(methodology).toContain("1,000,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
     db.close();
@@ -55,8 +57,9 @@ describe("static export", () => {
         snapshot_id, venue, market, symbol, local_timestamp_ms, mid_price, spread_bp,
         depth_10bp_bid_usd, depth_10bp_ask_usd, depth_10bp_total_usd,
         buy_slippage_100k_bp, sell_slippage_100k_bp, avg_slippage_100k_bp,
-        insufficient_depth_100k, valid, error
-      ) values (1, 'aevo', 'BTC', 'BTC-PERP', ?, 100, 1, 1000, 1000, 2000, 1, 1, 1, 0, 1, null)
+        insufficient_depth_100k, buy_slippage_1m_bp, sell_slippage_1m_bp, avg_slippage_1m_bp,
+        insufficient_depth_1m, valid, error
+      ) values (1, 'aevo', 'BTC', 'BTC-PERP', ?, 100, 1, 1000, 1000, 2000, 1, 1, 1, 0, 2, 2, 2, 0, 1, null)
     `).run(Date.now());
     exportStaticSite(db, join(tempDir, "public"));
 
@@ -94,8 +97,9 @@ describe("static export", () => {
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("data-label='\" + label + \"'");
     expect(index).toContain("\"100k Slippage\"");
+    expect(index).toContain("\"1M Slippage\"");
     expect(index).toContain("td::before");
-    expect(index).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr))");
+    expect(index).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 680px), 1fr))");
     db.close();
   });
 

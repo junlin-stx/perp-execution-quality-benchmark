@@ -76,6 +76,10 @@ export class BenchmarkDb {
         sell_slippage_100k_bp real,
         avg_slippage_100k_bp real,
         insufficient_depth_100k integer not null,
+        buy_slippage_1m_bp real,
+        sell_slippage_1m_bp real,
+        avg_slippage_1m_bp real,
+        insufficient_depth_1m integer not null default 0,
         valid integer not null,
         error text,
         foreign key (snapshot_id) references orderbook_snapshots(id)
@@ -98,6 +102,17 @@ export class BenchmarkDb {
         created_at_ms integer not null
       );
     `);
+    this.ensureExecutionMetricColumn("buy_slippage_1m_bp", "real");
+    this.ensureExecutionMetricColumn("sell_slippage_1m_bp", "real");
+    this.ensureExecutionMetricColumn("avg_slippage_1m_bp", "real");
+    this.ensureExecutionMetricColumn("insufficient_depth_1m", "integer not null default 0");
+  }
+
+  private ensureExecutionMetricColumn(name: string, definition: string): void {
+    const columns = this.db.prepare("pragma table_info(execution_metrics)").all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === name)) {
+      this.db.exec(`alter table execution_metrics add column ${name} ${definition}`);
+    }
   }
 
   upsertVenueMarketStatus(row: VenueMarketStatusRow): void {
@@ -141,8 +156,9 @@ export class BenchmarkDb {
         snapshot_id, venue, market, symbol, local_timestamp_ms, mid_price, spread_bp,
         depth_10bp_bid_usd, depth_10bp_ask_usd, depth_10bp_total_usd,
         buy_slippage_100k_bp, sell_slippage_100k_bp, avg_slippage_100k_bp,
-        insufficient_depth_100k, valid, error
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        insufficient_depth_100k, buy_slippage_1m_bp, sell_slippage_1m_bp,
+        avg_slippage_1m_bp, insufficient_depth_1m, valid, error
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       snapshotId,
       metrics.venue,
@@ -158,6 +174,10 @@ export class BenchmarkDb {
       metrics.sellSlippage100kBp,
       metrics.avgSlippage100kBp,
       metrics.insufficientDepth100k ? 1 : 0,
+      metrics.buySlippage1mBp,
+      metrics.sellSlippage1mBp,
+      metrics.avgSlippage1mBp,
+      metrics.insufficientDepth1m ? 1 : 0,
       metrics.valid ? 1 : 0,
       metrics.error
     );
@@ -165,10 +185,10 @@ export class BenchmarkDb {
 
   getLatestGrid(): unknown[] {
     return this.db.prepare(`
-      select venue, market, symbol, status, reason, null as spread_bp, null as depth_10bp_total_usd, null as avg_slippage_100k_bp
+      select venue, market, symbol, status, reason, null as spread_bp, null as depth_10bp_total_usd, null as avg_slippage_100k_bp, null as avg_slippage_1m_bp
       from venue_market_status
       union all
-      select venue, market, symbol, 'listed' as status, null as reason, spread_bp, depth_10bp_total_usd, avg_slippage_100k_bp
+      select venue, market, symbol, 'listed' as status, null as reason, spread_bp, depth_10bp_total_usd, avg_slippage_100k_bp, avg_slippage_1m_bp
       from execution_metrics
       where snapshot_id in (select max(snapshot_id) from execution_metrics group by venue, market)
     `).all();

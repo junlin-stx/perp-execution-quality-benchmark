@@ -12,12 +12,14 @@ const book: NormalizedOrderBook = {
   bids: [
     { price: 100, size: 500 },
     { price: 99.95, size: 400 },
-    { price: 99.8, size: 1000 }
+    { price: 99.8, size: 1000 },
+    { price: 95, size: 10_000 }
   ],
   asks: [
     { price: 100.1, size: 500 },
     { price: 100.15, size: 400 },
-    { price: 100.4, size: 1000 }
+    { price: 100.4, size: 1000 },
+    { price: 105, size: 10_000 }
   ],
   isPartial: false
 };
@@ -39,6 +41,14 @@ describe("orderbook metrics", () => {
     expect(sell.insufficientDepth).toBe(false);
     expect(buy.slippageBp).toBeGreaterThan(0);
     expect(sell.slippageBp).toBeGreaterThan(0);
+  });
+
+  it("calculates 1m buy and sell taker slippage separately from 100k", () => {
+    const metrics = calculateExecutionMetrics(book);
+    expect(metrics.insufficientDepth1m).toBe(false);
+    expect(metrics.buySlippage1mBp).toBeGreaterThan(metrics.buySlippage100kBp ?? 0);
+    expect(metrics.sellSlippage1mBp).toBeGreaterThan(metrics.sellSlippage100kBp ?? 0);
+    expect(metrics.avgSlippage1mBp).toBeGreaterThan(metrics.avgSlippage100kBp ?? 0);
   });
 
   it("marks insufficient depth instead of returning zero", () => {
