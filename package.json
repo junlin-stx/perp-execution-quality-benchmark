@@ -10,7 +10,8 @@
     "export": "tsx src/export/cli.ts",
     "run:benchmark": "tsx src/runner/cli.ts",
     "summary": "tsx src/summary/cli.ts",
-    "anomaly:dry-run": "tsx src/anomaly/cli.ts"
+    "anomaly:dry-run": "tsx src/anomaly/cli.ts",
+    "telegram:send-anomalies": "tsx src/telegram/send-anomalies.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

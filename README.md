@@ -48,6 +48,24 @@ Defaults:
 - write SQLite data to `data/benchmark.sqlite`
 - write static artifacts to `public/`
 
+## Telegram Anomaly Channel
+
+Dry-run anomaly detection never sends messages:
+
+```bash
+npm run anomaly:dry-run
+```
+
+To send exported anomaly events to a Telegram channel, configure:
+
+```bash
+export TELEGRAM_BOT_TOKEN="..."
+export TELEGRAM_CHAT_ID="@your_channel"
+npm run telegram:send-anomalies
+```
+
+The sender reads `public/data/anomalies.json` and only sends execution quality anomaly messages that were already exported. It does not send alpha, liquidation, whale, vault, or trading-signal content.
+
 ## Methodology
 
 See `public/methodology.html` after running the static export, and `docs/superpowers/specs/2026-05-29-perp-execution-quality-benchmark-design.md` for the design.
