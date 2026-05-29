@@ -53,7 +53,7 @@
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -76,10 +76,10 @@
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex", "grvt", "lighter"];
+    const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter"];
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
-    const labels = { hyperliquid: "Hyperliquid", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
+    const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([

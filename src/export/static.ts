@@ -1,20 +1,21 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { collectionTargets } from "../config/markets.js";
+import { collectionTargets, venues } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
 export function exportStaticSite(db: BenchmarkDb, outputDir = "public"): void {
   const dataDir = join(outputDir, "data");
   mkdirSync(dataDir, { recursive: true });
+  const activeVenues = new Set<string>(venues);
 
   const latest = {
     generatedAt: new Date().toISOString(),
     targets: collectionTargets,
-    rows: db.getLatestGrid()
+    rows: filterActiveVenueRows(db.getLatestGrid(), activeVenues)
   };
-  const history = db.getHistorySince(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const summaries = db.getDailySummaries();
-  const anomalies = db.getRecentAnomalies();
+  const history = filterActiveVenueRows(db.getHistorySince(Date.now() - 7 * 24 * 60 * 60 * 1000), activeVenues);
+  const summaries = filterRemovedVenueSummaries(db.getDailySummaries());
+  const anomalies = filterActiveVenueRows(db.getRecentAnomalies(), activeVenues);
 
   writeJson(join(dataDir, "latest.json"), latest);
   writeJson(join(dataDir, "history-7d.json"), history);
@@ -26,6 +27,20 @@ export function exportStaticSite(db: BenchmarkDb, outputDir = "public"): void {
 
 function writeJson(path: string, data: unknown): void {
   writeFileSync(path, `${JSON.stringify(data, null, 2)}\n`, "utf8");
+}
+
+function filterActiveVenueRows(rows: unknown[], activeVenues: Set<string>): unknown[] {
+  return rows.filter((row) => {
+    const venue = (row as { venue?: unknown }).venue;
+    return typeof venue !== "string" || activeVenues.has(venue);
+  });
+}
+
+function filterRemovedVenueSummaries(rows: unknown[]): unknown[] {
+  return rows.filter((row) => {
+    const summary = (row as { summary?: unknown }).summary;
+    return typeof summary !== "string" || !summary.includes("Aevo");
+  });
 }
 
 function indexHtml(): string {
@@ -84,7 +99,7 @@ function indexHtml(): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -107,10 +122,10 @@ function indexHtml(): string {
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex", "grvt", "lighter"];
+    const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter"];
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
-    const labels = { hyperliquid: "Hyperliquid", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
+    const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([
@@ -254,12 +269,11 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
     <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
-    <li>Aevo: <code>GET https://api.aevo.xyz/orderbook</code> by <code>instrument_name</code>.</li>
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>

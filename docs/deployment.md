@@ -27,7 +27,7 @@ npm run run:benchmark -- --once
 The one-shot command should print:
 
 ```text
-collected=20 failed=0 not_listed=1
+collected=17 failed=0 not_listed=1
 exported static benchmark to public
 ```
 

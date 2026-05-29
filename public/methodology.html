@@ -15,12 +15,11 @@
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
     <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
-    <li>Aevo: <code>GET https://api.aevo.xyz/orderbook</code> by <code>instrument_name</code>.</li>
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>

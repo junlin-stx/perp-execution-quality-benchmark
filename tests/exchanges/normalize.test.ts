@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { normalizeAevoBook } from "../../src/exchanges/aevo.js";
 import { normalizeAsterBook } from "../../src/exchanges/aster.js";
 import { normalizeEdgexBook } from "../../src/exchanges/edgex.js";
 import { normalizeGrvtBook } from "../../src/exchanges/grvt.js";
@@ -12,12 +11,6 @@ describe("adapter normalization", () => {
     const book = normalizeHyperliquidBook("ETH", "ETH", { time: 2, levels: [[{ px: "99", sz: "4" }], [{ px: "100", sz: "5" }]] }, 1, 5);
     expect(book.bids[0]).toEqual({ price: 99, size: 4 });
     expect(book.asks[0]).toEqual({ price: 100, size: 5 });
-  });
-
-  it("normalizes Aevo array levels", () => {
-    const book = normalizeAevoBook("SOL", "SOL-PERP", { last_updated: "2", bids: [["10", "6"]], asks: [["10.1", "7"]] }, 1, 5);
-    expect(book.bids[0]).toEqual({ price: 10, size: 6 });
-    expect(book.asks[0]).toEqual({ price: 10.1, size: 7 });
   });
 
   it("sorts StandX bids and asks", () => {

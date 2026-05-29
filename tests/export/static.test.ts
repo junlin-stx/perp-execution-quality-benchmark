@@ -21,8 +21,9 @@ describe("static export", () => {
     exportStaticSite(db, join(tempDir, "public"));
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("Perp Execution Quality");
-    expect(index).toContain("const venues = [\"hyperliquid\", \"aevo\", \"standx\", \"aster\", \"edgex\", \"grvt\", \"lighter\"]");
+    expect(index).toContain("const venues = [\"hyperliquid\", \"standx\", \"aster\", \"edgex\", \"grvt\", \"lighter\"]");
     expect(index).not.toContain("Binance Perps");
+    expect(index).not.toContain("Aevo");
     expect(index).toContain("Aster");
     expect(index).toContain("edgeX");
     expect(index).toContain("validCount + \"/\" + venues.length + \" live</span>");
@@ -35,6 +36,34 @@ describe("static export", () => {
     expect(readFileSync(join(tempDir, "public", "methodology.html"), "utf8")).toContain("100,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
+    db.close();
+  });
+
+  it("does not export stale rows for removed venues", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    const raw = db.getRawDatabase();
+    raw.prepare(`
+      insert into orderbook_snapshots (
+        id, venue, market, symbol, source, local_timestamp_ms, source_timestamp_ms, latency_ms,
+        bid_count, ask_count, is_partial, status, error
+      ) values (1, 'aevo', 'BTC', 'BTC-PERP', 'fixture', ?, null, 1, 1, 1, 0, 'ok', null)
+    `).run(Date.now());
+    raw.prepare(`
+      insert into execution_metrics (
+        snapshot_id, venue, market, symbol, local_timestamp_ms, mid_price, spread_bp,
+        depth_10bp_bid_usd, depth_10bp_ask_usd, depth_10bp_total_usd,
+        buy_slippage_100k_bp, sell_slippage_100k_bp, avg_slippage_100k_bp,
+        insufficient_depth_100k, valid, error
+      ) values (1, 'aevo', 'BTC', 'BTC-PERP', ?, 100, 1, 1000, 1000, 2000, 1, 1, 1, 0, 1, null)
+    `).run(Date.now());
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const latest = readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8");
+    const history = readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8");
+    expect(latest).not.toContain("aevo");
+    expect(history).not.toContain("aevo");
     db.close();
   });
 

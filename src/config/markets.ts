@@ -1,4 +1,4 @@
-export const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex", "grvt", "lighter"] as const;
+export const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter"] as const;
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
@@ -17,9 +17,6 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "hyperliquid", market: "BTC", symbol: "BTC", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "ETH", symbol: "ETH", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "SOL", symbol: "SOL", status: "listed", source: "hyperliquid_l2_book" },
-  { venue: "aevo", market: "BTC", symbol: "BTC-PERP", status: "listed", source: "aevo_orderbook" },
-  { venue: "aevo", market: "ETH", symbol: "ETH-PERP", status: "listed", source: "aevo_orderbook" },
-  { venue: "aevo", market: "SOL", symbol: "SOL-PERP", status: "listed", source: "aevo_orderbook" },
   { venue: "standx", market: "BTC", symbol: "BTC-USD", status: "listed", source: "standx_depth_book" },
   { venue: "standx", market: "ETH", symbol: "ETH-USD", status: "listed", source: "standx_depth_book" },
   { venue: "standx", market: "SOL", symbol: "SOL-USD", status: "not_listed", source: "standx_symbol_info" },

@@ -17,7 +17,7 @@ describe("daily summary", () => {
     const text = buildDailySummaryText("2026-05-28", "BTC", [
       { venue: "aster", market: "BTC", medianSlippageBp: 1.2, status: "listed" },
       { venue: "hyperliquid", market: "BTC", medianSlippageBp: 1.6, status: "listed" },
-      { venue: "aevo", market: "BTC", medianSlippageBp: 3.3, status: "listed" },
+      { venue: "grvt", market: "BTC", medianSlippageBp: 3.3, status: "listed" },
       { venue: "standx", market: "BTC", medianSlippageBp: 4.2, status: "listed" }
     ]);
     expect(text).toContain("Yesterday BTC 100k taker execution: Aster best at 1.20 bp");

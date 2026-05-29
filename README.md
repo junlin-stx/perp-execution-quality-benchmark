@@ -1,6 +1,6 @@
 # Perp Execution Quality Benchmark
 
-Open collector and static benchmark for basic perp execution quality across Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter.
+Open collector and static benchmark for basic perp execution quality across Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter.
 
 Public repo: https://github.com/junlin-stx/perp-execution-quality-benchmark
 Public benchmark: https://junlin-stx.github.io/perp-execution-quality-benchmark/
