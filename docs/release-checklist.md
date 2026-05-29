@@ -60,10 +60,9 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
 Before launch, verify the methodology page states:
 
 - Metric formulas for spread, 10bp depth, and 100,000 USD taker slippage.
-- Data sources for Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.
+- Data sources for Hyperliquid, Aevo, StandX, Aster, and edgeX.
 - 30 to 60 second collection cadence.
 - 5 minute static export cadence.
-- Binance RPI public-book limitation.
 - Hyperliquid 20-level public-book limitation.
 - StandX SOL is not replaced with another StandX market.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.
@@ -71,7 +70,6 @@ Before launch, verify the methodology page states:
 Command:
 
 ```bash
-rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|whale|vault" public/methodology.html
 ```
 
 ## Current External-State Gaps

@@ -10,7 +10,6 @@ export interface DailyVenueMetric {
 
 const venueLabels: Record<Venue, string> = {
   hyperliquid: "Hyperliquid",
-  binance_perps: "Binance Perps",
   aevo: "Aevo",
   standx: "StandX",
   aster: "Aster",

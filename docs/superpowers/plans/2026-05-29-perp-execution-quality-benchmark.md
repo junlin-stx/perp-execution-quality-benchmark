@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first public perp execution quality benchmark for Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX across BTC, ETH, and SOL with spread, 10bp depth, and 100,000 USD estimated slippage.
+**Goal:** Build the first public perp execution quality benchmark for Hyperliquid, Aevo, StandX, Aster, and edgeX across BTC, ETH, and SOL with spread, 10bp depth, and 100,000 USD estimated slippage.
 
 **Architecture:** Implement a collector-first TypeScript project. Venue adapters normalize public order books, pure metric functions compute execution quality, SQLite stores append-only samples, and export jobs generate static public HTML/JSON plus daily summary and Telegram anomaly dry-run output.
 
@@ -20,7 +20,6 @@
 - Create `src/types/orderbook.ts`: shared normalized order book and metric types.
 - Create `src/metrics/orderbook.ts`: pure spread, 10bp depth, and 100k slippage functions.
 - Create `src/exchanges/http.ts`: fetch helper with latency and JSON parsing.
-- Create `src/exchanges/binance.ts`: Binance USD-M depth adapter.
 - Create `src/exchanges/hyperliquid.ts`: Hyperliquid `l2Book` adapter.
 - Create `src/exchanges/aevo.ts`: Aevo orderbook adapter.
 - Create `src/exchanges/standx.ts`: StandX depth adapter and symbol availability adapter.
@@ -116,7 +115,7 @@ Create `README.md`:
 ```markdown
 # Perp Execution Quality Benchmark
 
-Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.
+Open collector and static benchmark for basic perp execution quality across Hyperliquid, Aevo, StandX, Aster, and edgeX.
 
 The first phase compares BTC, ETH, and SOL using:
 
@@ -201,7 +200,6 @@ import { collectionTargets, markets, venues } from "../../src/config/markets.js"
 
 describe("fixed benchmark universe", () => {
   it("keeps exactly 6 venues and 3 markets", () => {
-    expect(venues).toEqual(["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"]);
     expect(markets).toEqual(["BTC", "ETH", "SOL"]);
   });
 
@@ -227,7 +225,6 @@ Expected: FAIL because `src/config/markets.ts` does not exist.
 Create `src/config/markets.ts`:
 
 ```ts
-export const venues = ["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"] as const;
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
@@ -246,9 +243,6 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "hyperliquid", market: "BTC", symbol: "BTC", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "ETH", symbol: "ETH", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "SOL", symbol: "SOL", status: "listed", source: "hyperliquid_l2_book" },
-  { venue: "binance_perps", market: "BTC", symbol: "BTCUSDT", status: "listed", source: "binance_usdm_depth" },
-  { venue: "binance_perps", market: "ETH", symbol: "ETHUSDT", status: "listed", source: "binance_usdm_depth" },
-  { venue: "binance_perps", market: "SOL", symbol: "SOLUSDT", status: "listed", source: "binance_usdm_depth" },
   { venue: "aevo", market: "BTC", symbol: "BTC-PERP", status: "listed", source: "aevo_orderbook" },
   { venue: "aevo", market: "ETH", symbol: "ETH-PERP", status: "listed", source: "aevo_orderbook" },
   { venue: "aevo", market: "SOL", symbol: "SOL-PERP", status: "listed", source: "aevo_orderbook" },
@@ -344,9 +338,7 @@ import { calculateExecutionMetrics, estimateTakerSlippage, sumDepthWithinBp } fr
 import type { NormalizedOrderBook } from "../../src/types/orderbook.js";
 
 const book: NormalizedOrderBook = {
-  venue: "binance_perps",
   market: "BTC",
-  symbol: "BTCUSDT",
   source: "fixture",
   localTimestampMs: 1,
   latencyMs: 12,
@@ -571,10 +563,7 @@ describe("BenchmarkDb", () => {
     db.initialize();
     db.upsertVenueMarketStatus({ venue: "standx", market: "SOL", symbol: "SOL-USD", status: "not_listed", reason: "not in symbol list" });
     const snapshotId = db.insertSnapshot({
-      venue: "binance_perps",
       market: "BTC",
-      symbol: "BTCUSDT",
-      source: "binance_usdm_depth",
       localTimestampMs: 1,
       sourceTimestampMs: 2,
       latencyMs: 10,
@@ -585,9 +574,7 @@ describe("BenchmarkDb", () => {
       error: null
     });
     db.insertMetrics(snapshotId, {
-      venue: "binance_perps",
       market: "BTC",
-      symbol: "BTCUSDT",
       localTimestampMs: 1,
       midPrice: 100,
       spreadBp: 1,
@@ -788,7 +775,6 @@ git commit -m "feat: store benchmark samples in sqlite"
 
 **Files:**
 - Create: `src/exchanges/http.ts`
-- Create: `src/exchanges/binance.ts`
 - Create: `src/exchanges/hyperliquid.ts`
 - Create: `src/exchanges/aevo.ts`
 - Create: `src/exchanges/standx.ts`
@@ -804,13 +790,10 @@ Create `tests/exchanges/normalize.test.ts`:
 ```ts
 import { describe, expect, it } from "vitest";
 import { normalizeAevoBook } from "../../src/exchanges/aevo.js";
-import { normalizeBinanceBook } from "../../src/exchanges/binance.js";
 import { normalizeHyperliquidBook } from "../../src/exchanges/hyperliquid.js";
 import { normalizeStandxBook } from "../../src/exchanges/standx.js";
 
 describe("adapter normalization", () => {
-  it("normalizes Binance array levels", () => {
-    const book = normalizeBinanceBook("BTC", "BTCUSDT", { E: 2, bids: [["100", "2"]], asks: [["101", "3"]] }, 1, 5);
     expect(book.bids[0]).toEqual({ price: 100, size: 2 });
     expect(book.asks[0]).toEqual({ price: 101, size: 3 });
   });
@@ -1008,7 +991,6 @@ The generated methodology page must include:
 - 30-60 second collection cadence;
 - 5 minute static export cadence;
 - StandX SOL not listed rule;
-- Binance RPI liquidity limitation;
 - Hyperliquid 20-level limitation;
 - no alpha/liquidation/whale/vault scope.
 
@@ -1070,12 +1052,10 @@ import { buildDailySummaryText } from "../../src/summary/daily.js";
 describe("daily summary", () => {
   it("ranks venues by median 100k slippage and states not-listed markets", () => {
     const lines = buildDailySummaryText("2026-05-28", "BTC", [
-      { venue: "binance_perps", market: "BTC", medianSlippageBp: 1.2, status: "listed" },
       { venue: "hyperliquid", market: "BTC", medianSlippageBp: 1.6, status: "listed" },
       { venue: "aevo", market: "BTC", medianSlippageBp: 3.3, status: "listed" },
       { venue: "standx", market: "BTC", medianSlippageBp: 4.2, status: "listed" }
     ]);
-    expect(lines).toContain("Yesterday BTC 100k taker execution: Binance Perps best at 1.20 bp");
     expect(lines).toContain("Hyperliquid +0.40 bp");
   });
 
@@ -1358,7 +1338,6 @@ Expected: output is prefixed with `[dry-run]` and contains only execution qualit
 Run:
 
 ```bash
-rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|whale|vault" public/methodology.html
 ```
 
 Expected: each limitation and non-goal appears in the methodology page.

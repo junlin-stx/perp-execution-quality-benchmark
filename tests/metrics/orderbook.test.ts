@@ -3,9 +3,9 @@ import { calculateExecutionMetrics, estimateTakerSlippage, sumDepthWithinBp } fr
 import type { NormalizedOrderBook } from "../../src/types/orderbook.js";
 
 const book: NormalizedOrderBook = {
-  venue: "binance_perps",
+  venue: "hyperliquid",
   market: "BTC",
-  symbol: "BTCUSDT",
+  symbol: "BTC",
   source: "fixture",
   localTimestampMs: 1,
   latencyMs: 12,

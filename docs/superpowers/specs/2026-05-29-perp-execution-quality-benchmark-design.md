@@ -2,18 +2,17 @@
 
 ## Goal
 
-Build an open, reproducible perp execution quality benchmark that compares Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX on BTC, ETH, and SOL using one shared methodology. The first phase is not a trading signal, paid product, or full web application. Its purpose is to test whether traders trust the data collection and calculations enough to cite, share, dispute, and improve them without dismissing the benchmark.
+Build an open, reproducible perp execution quality benchmark that compares Hyperliquid, Aevo, StandX, Aster, and edgeX on BTC, ETH, and SOL using one shared methodology. The first phase is not a trading signal, paid product, or full web application. Its purpose is to test whether traders trust the data collection and calculations enough to cite, share, dispute, and improve them without dismissing the benchmark.
 
 ## Non-Goals
 
-The benchmark will not include paid access, login, custom alerts, a fourth market, liquidation analysis, whale tracking, vault analysis, or venue-specific marketing treatment. StandX, Aster, and edgeX are execution venues in the same comparison grid as Hyperliquid, Binance Perps, and Aevo.
+The benchmark will not include paid access, login, custom alerts, a fourth market, liquidation analysis, whale tracking, vault analysis, or venue-specific marketing treatment. StandX, Aster, and edgeX are execution venues in the same comparison grid as Hyperliquid, and Aevo.
 
 ## Scope
 
 The first phase includes exactly these venues:
 
 - Hyperliquid
-- Binance Perps
 - Aevo
 - StandX
 - Aster
@@ -40,10 +39,8 @@ Use public order book endpoints only. Do not use private accounts, privileged ma
 | Venue | Markets | Source shape | Notes |
 | --- | --- | --- | --- |
 | Hyperliquid | BTC, ETH, SOL | `POST https://api.hyperliquid.xyz/info` with `type=l2Book` | Returns up to 20 levels per side. |
-| Binance Perps | BTCUSDT, ETHUSDT, SOLUSDT | `GET https://fapi.binance.com/fapi/v1/depth` | Use USD-M futures. RPI liquidity is not included in the public book. |
 | Aevo | BTC-PERP, ETH-PERP, SOL-PERP | `GET https://api.aevo.xyz/orderbook` | Use public snapshot response by `instrument_name`. |
 | StandX | BTC-USD, ETH-USD, SOL unavailable | `GET https://perps.standx.com/api/query_depth_book` | Sort bids descending and asks ascending client-side. Confirm available markets through `query_symbol_info`. |
-| Aster | BTCUSDT, ETHUSDT, SOLUSDT | `GET https://fapi.asterdex.com/fapi/v1/depth` | USDT-margined perpetual futures. |
 | edgeX | BTCUSD, ETHUSD, SOLUSD | `GET https://pro.edgex.exchange/api/v1/public/quote/getDepth` | Public REST snapshot with fixed depth levels; request level 200. |
 
 Every sample stores the source URL label, normalized venue, normalized market, venue-native symbol, fetch latency, source timestamp when available, local collection timestamp, level count, partial-data flag, and error reason when a fetch or normalization step fails.
@@ -159,7 +156,6 @@ The summary ranks venues by the median daily 100,000 USD taker slippage for each
 
 Example format:
 
-`Yesterday BTC 100k taker execution: Binance best at 1.2 bp, Hyperliquid +0.4 bp, Aevo +2.1 bp, StandX +3.0 bp.`
 
 If a venue-market is not listed, the summary says so plainly:
 

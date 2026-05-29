@@ -112,7 +112,6 @@ node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('public/data
 Verify methodology boundaries:
 
 ```bash
-rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|whale|vault" public/methodology.html
 ```
 
 ## Why Not Pure Scheduled Static CI

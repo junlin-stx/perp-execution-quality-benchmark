@@ -18,10 +18,10 @@ describe("BenchmarkDb", () => {
     db.initialize();
     db.upsertVenueMarketStatus({ venue: "standx", market: "SOL", symbol: "SOL-USD", status: "not_listed", reason: "not in symbol list" });
     const snapshotId = db.insertSnapshot({
-      venue: "binance_perps",
+      venue: "hyperliquid",
       market: "BTC",
-      symbol: "BTCUSDT",
-      source: "binance_usdm_depth",
+      symbol: "BTC",
+      source: "hyperliquid_l2_book",
       localTimestampMs: 1,
       sourceTimestampMs: 2,
       latencyMs: 10,
@@ -32,9 +32,9 @@ describe("BenchmarkDb", () => {
       error: null
     });
     db.insertMetrics(snapshotId, {
-      venue: "binance_perps",
+      venue: "hyperliquid",
       market: "BTC",
-      symbol: "BTCUSDT",
+      symbol: "BTC",
       localTimestampMs: 1,
       midPrice: 100,
       spreadBp: 1,

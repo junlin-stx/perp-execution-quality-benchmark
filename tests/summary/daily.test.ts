@@ -15,12 +15,12 @@ afterEach(() => {
 describe("daily summary", () => {
   it("ranks venues by median 100k slippage and states not-listed markets", () => {
     const text = buildDailySummaryText("2026-05-28", "BTC", [
-      { venue: "binance_perps", market: "BTC", medianSlippageBp: 1.2, status: "listed" },
+      { venue: "aster", market: "BTC", medianSlippageBp: 1.2, status: "listed" },
       { venue: "hyperliquid", market: "BTC", medianSlippageBp: 1.6, status: "listed" },
       { venue: "aevo", market: "BTC", medianSlippageBp: 3.3, status: "listed" },
       { venue: "standx", market: "BTC", medianSlippageBp: 4.2, status: "listed" }
     ]);
-    expect(text).toContain("Yesterday BTC 100k taker execution: Binance Perps best at 1.20 bp");
+    expect(text).toContain("Yesterday BTC 100k taker execution: Aster best at 1.20 bp");
     expect(text).toContain("Hyperliquid +0.40 bp");
   });
 
@@ -44,9 +44,9 @@ describe("daily summary", () => {
 
     for (const [index, slippage] of [1, 100, 101].entries()) {
       const snapshotId = db.insertSnapshot({
-        venue: "binance_perps",
+        venue: "hyperliquid",
         market: "BTC",
-        symbol: "BTCUSDT",
+        symbol: "BTC",
         source: "fixture",
         localTimestampMs: times[index],
         sourceTimestampMs: null,
@@ -58,9 +58,9 @@ describe("daily summary", () => {
         error: null
       });
       db.insertMetrics(snapshotId, {
-        venue: "binance_perps",
+        venue: "hyperliquid",
         market: "BTC",
-        symbol: "BTCUSDT",
+        symbol: "BTC",
         localTimestampMs: times[index],
         midPrice: 100,
         spreadBp: 1,
@@ -78,7 +78,7 @@ describe("daily summary", () => {
 
     const [btcSummary] = generateDailySummaries(db, utcDate);
 
-    expect(btcSummary).toContain("Binance Perps best at 100.00 bp");
+    expect(btcSummary).toContain("Hyperliquid best at 100.00 bp");
     expect(btcSummary).not.toContain("67.33 bp");
     db.close();
   });
