@@ -49,7 +49,7 @@ function indexHtml(): string {
     .muted { color: #6c747d; }
     .status { font-weight: 650; }
     .toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .comparison-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr)); gap: 14px; align-items: start; }
     .market-panel { background: #ffffff; border: 1px solid #d8d2c5; min-width: 0; }
     .market-panel h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 12px 14px; border-bottom: 1px solid #e8e2d6; background: #22333b; color: #ffffff; font-size: 18px; }
     .market-panel h2 span { color: #dce8e4; font-size: 12px; font-weight: 600; }
@@ -69,7 +69,6 @@ function indexHtml(): string {
     .summary-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .summary-list li { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px 12px; line-height: 1.45; }
     a { color: #0d5c63; }
-    @media (max-width: 1100px) { .comparison-grid { grid-template-columns: 1fr; } }
     @media (max-width: 820px) {
       .history-grid { grid-template-columns: 1fr; }
       main { padding: 18px; }

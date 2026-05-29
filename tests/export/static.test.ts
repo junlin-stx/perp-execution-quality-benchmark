@@ -61,7 +61,7 @@ describe("static export", () => {
     expect(index).toContain("data-label='\" + label + \"'");
     expect(index).toContain("\"100k Slippage\"");
     expect(index).toContain("td::before");
-    expect(index).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    expect(index).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 1fr))");
     db.close();
   });
 });
