@@ -14,7 +14,9 @@ const venueLabels: Record<Venue, string> = {
   aster: "Aster",
   edgex: "edgeX",
   grvt: "GRVT",
-  lighter: "Lighter"
+  lighter: "Lighter",
+  extended: "Extended",
+  nado: "Nado"
 };
 
 export function buildDailySummaryText(_utcDate: string, market: Market, rows: DailyVenueMetric[]): string {

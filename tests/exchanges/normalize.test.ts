@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { normalizeAsterBook } from "../../src/exchanges/aster.js";
 import { normalizeEdgexBook } from "../../src/exchanges/edgex.js";
+import { normalizeExtendedBook } from "../../src/exchanges/extended.js";
 import { normalizeGrvtBook } from "../../src/exchanges/grvt.js";
 import { normalizeHyperliquidBook } from "../../src/exchanges/hyperliquid.js";
 import { normalizeLighterBook } from "../../src/exchanges/lighter.js";
+import { normalizeNadoBook } from "../../src/exchanges/nado.js";
 import { normalizeStandxBook } from "../../src/exchanges/standx.js";
 
 describe("adapter normalization", () => {
@@ -72,5 +74,31 @@ describe("adapter normalization", () => {
     expect(book.source).toBe("lighter_order_book_orders");
     expect(book.bids).toEqual([{ price: 100, size: 2 }, { price: 99, size: 1 }]);
     expect(book.asks).toEqual([{ price: 101, size: 4 }, { price: 102, size: 3 }]);
+  });
+
+  it("normalizes Extended public orderbook levels", () => {
+    const book = normalizeExtendedBook("BTC", "BTC-USD", {
+      data: {
+        bid: [{ price: "100", qty: "2" }],
+        ask: [{ price: "101", qty: "3" }]
+      }
+    }, 1, 5);
+    expect(book.venue).toBe("extended");
+    expect(book.source).toBe("extended_orderbook");
+    expect(book.bids[0]).toEqual({ price: 100, size: 2 });
+    expect(book.asks[0]).toEqual({ price: 101, size: 3 });
+  });
+
+  it("normalizes Nado x18 liquidity levels", () => {
+    const book = normalizeNadoBook("ETH", "4", {
+      data: {
+        bids: [["100000000000000000000", "2000000000000000000"]],
+        asks: [["101000000000000000000", "3000000000000000000"]]
+      }
+    }, 1, 5);
+    expect(book.venue).toBe("nado");
+    expect(book.source).toBe("nado_market_liquidity");
+    expect(book.bids[0]).toEqual({ price: 100, size: 2 });
+    expect(book.asks[0]).toEqual({ price: 101, size: 3 });
   });
 });

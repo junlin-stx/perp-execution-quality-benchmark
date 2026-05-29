@@ -99,7 +99,7 @@ function indexHtml(): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -122,10 +122,10 @@ function indexHtml(): string {
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter"];
+    const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter", "extended", "nado"];
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
-    const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
+    const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([
@@ -269,7 +269,7 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
@@ -279,6 +279,8 @@ function methodologyHtml(): string {
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
     <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>
     <li>Lighter: <code>GET https://mainnet.zklighter.elliot.ai/api/v1/orderBookOrders</code> for public order-level snapshots. This benchmark requests up to 250 orders per side and aggregates them into price levels before computing metrics.</li>
+    <li>Extended: <code>GET https://api.starknet.extended.exchange/api/v1/info/markets/{market}/orderbook</code> for public perpetual order book depth.</li>
+    <li>Nado: <code>GET https://gateway.prod.nado.xyz/v1/query?type=market_liquidity</code> for public perpetual market liquidity. This benchmark requests 50 levels per side and converts x18 price and size values into price levels.</li>
   </ul>
 
   <h2>Cadence</h2>
@@ -304,7 +306,7 @@ function methodologyHtml(): string {
     <li>Hidden, private, or venue-internal liquidity is not measured.</li>
     <li>Hyperliquid public books are limited to 20 levels per side.</li>
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
-    <li>Aster, edgeX, GRVT, and Lighter are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
+    <li>Aster, edgeX, GRVT, Lighter, Extended, and Nado are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
 </main>
 </body>

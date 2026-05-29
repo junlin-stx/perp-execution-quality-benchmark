@@ -1,4 +1,4 @@
-export const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter"] as const;
+export const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter", "extended", "nado"] as const;
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
@@ -31,5 +31,11 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "grvt", market: "SOL", symbol: "SOL_USDT_Perp", status: "listed", source: "grvt_full_book" },
   { venue: "lighter", market: "BTC", symbol: "BTC", status: "listed", source: "lighter_order_book_orders" },
   { venue: "lighter", market: "ETH", symbol: "ETH", status: "listed", source: "lighter_order_book_orders" },
-  { venue: "lighter", market: "SOL", symbol: "SOL", status: "listed", source: "lighter_order_book_orders" }
+  { venue: "lighter", market: "SOL", symbol: "SOL", status: "listed", source: "lighter_order_book_orders" },
+  { venue: "extended", market: "BTC", symbol: "BTC-USD", status: "listed", source: "extended_orderbook" },
+  { venue: "extended", market: "ETH", symbol: "ETH-USD", status: "listed", source: "extended_orderbook" },
+  { venue: "extended", market: "SOL", symbol: "SOL-USD", status: "listed", source: "extended_orderbook" },
+  { venue: "nado", market: "BTC", symbol: "2", status: "listed", source: "nado_market_liquidity" },
+  { venue: "nado", market: "ETH", symbol: "4", status: "listed", source: "nado_market_liquidity" },
+  { venue: "nado", market: "SOL", symbol: "8", status: "listed", source: "nado_market_liquidity" }
 ];
