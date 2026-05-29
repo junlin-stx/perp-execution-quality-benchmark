@@ -71,6 +71,7 @@ The sender reads `public/data/anomalies.json` and only sends execution quality a
 Local collector, methodology, static page, daily summary generation, and Telegram anomaly sender are implemented. Public launch still requires a public git remote, static hosting for `public/`, and Telegram channel credentials.
 
 See `docs/release-checklist.md`.
+See `docs/deployment.md` for the persistent deployment runbook.
 
 ## Methodology
 

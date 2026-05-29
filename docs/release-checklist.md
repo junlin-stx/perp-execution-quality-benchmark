@@ -23,6 +23,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
 1. Create a public Git repository and push this repo.
    - Evidence: `git remote -v` shows the public remote.
    - Evidence: public repository URL opens without authentication.
+   - Evidence: the public repository includes `LICENSE`.
 
 2. Deploy `public/` to a static host.
    - Acceptable hosts: GitHub Pages, Cloudflare Pages, Vercel static, Netlify static, or an equivalent static host.
@@ -34,6 +35,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Command: `npm run run:benchmark`
    - Evidence: `public/data/latest.json` updates every 5 minutes.
    - Evidence: `public/data/history-7d.json` grows over time.
+   - Evidence: `data/benchmark.sqlite` is stored on persistent disk.
 
 4. Create the Telegram anomaly channel.
    - Evidence: `TELEGRAM_CHAT_ID` points to the public channel.
@@ -70,3 +72,6 @@ rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|wh
 - No public static deployment URL is configured yet.
 - No Telegram bot token or channel id is configured in this workspace.
 
+## Deployment Note
+
+See `docs/deployment.md`. The benchmark needs persistent storage for `data/benchmark.sqlite`; a disposable scheduled CI job without restored storage is not enough for a credible 7 day history.
