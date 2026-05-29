@@ -207,23 +207,50 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     const dataBaseUrl = ${JSON.stringify(dataBaseUrl)};
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
     const dataUrl = (name) => dataBaseUrl ? dataBaseUrl + "/data/" + name : "data/" + name;
+    let refreshInFlight = false;
 
-    Promise.all([
-      fetch(dataUrl("latest.json")).then((response) => response.json()),
-      fetch(dataUrl("history-7d.json")).then((response) => response.json()),
-      fetch(dataUrl("daily-summary.json")).then((response) => response.json())
-    ])
-      .then(([latest, history, summaries]) => {
-        renderLatest(latest);
-        renderSummaries(summaries);
-        renderHistory(history);
-        setInterval(refreshLatest, 60_000);
+    loadData().then(([latest, history, summaries]) => {
+        renderData(latest, history, summaries);
+        setInterval(refreshData, 60_000);
       });
 
-    function refreshLatest() {
-      fetch(dataUrl("latest.json") + "?ts=" + Date.now())
-        .then((response) => response.json())
-        .then((latest) => renderLatest(latest));
+    function loadData(ts = null) {
+      const suffix = ts ? "?ts=" + ts : "";
+      return Promise.all([
+        fetchJson("latest.json", suffix),
+        fetchJson("history-7d.json", suffix),
+        fetchJson("daily-summary.json", suffix)
+      ]);
+    }
+
+    function fetchJson(name, suffix) {
+      return fetch(dataUrl(name) + suffix).then((response) => {
+        if (!response.ok) throw new Error("Failed to load " + name);
+        return response.json();
+      });
+    }
+
+    function refreshData() {
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      const ts = Date.now();
+      loadData(ts)
+        .then(([latest, history, summaries]) => {
+          renderData(latest, history, summaries);
+        })
+        .catch(() => {
+          const freshness = document.getElementById("freshness");
+          if (!freshness.textContent.includes("refresh failed")) freshness.textContent += " · refresh failed; keeping last good data";
+        })
+        .finally(() => {
+          refreshInFlight = false;
+        });
+    }
+
+    function renderData(latest, history, summaries) {
+      renderLatest(latest);
+      renderSummaries(summaries);
+      renderHistory(history);
     }
 
     function renderLatest(latest) {

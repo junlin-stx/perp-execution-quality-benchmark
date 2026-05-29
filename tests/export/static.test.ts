@@ -30,10 +30,10 @@ describe("static export", () => {
     expect(index).toContain("edgeX");
     expect(index).toContain("validCount + \"/\" + benchmarkVenues.length + \" benchmark live</span>");
     expect(index).toContain("7 Day History");
-    expect(index).toContain('dataUrl("history-7d.json")');
+    expect(index).toContain('fetchJson("history-7d.json", suffix)');
     expect(index).toContain("id=\"history\"");
     expect(index).toContain("Daily Summary");
-    expect(index).toContain('dataUrl("daily-summary.json")');
+    expect(index).toContain('fetchJson("daily-summary.json", suffix)');
     expect(index).toContain("id=\"daily-summary\"");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
     expect(methodology).toContain("100,000 USD");
@@ -209,15 +209,25 @@ describe("static export", () => {
     db.close();
   });
 
-  it("refreshes latest comparison data on the public page", () => {
+  it("refreshes public page data every minute", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
     exportStaticSite(db, join(tempDir, "public"));
 
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
-    expect(index).toContain("setInterval(refreshLatest, 60_000)");
-    expect(index).toContain("function refreshLatest()");
+    expect(index).toContain("setInterval(refreshData, 60_000)");
+    expect(index).toContain("function refreshData()");
+    expect(index).toContain("let refreshInFlight = false");
+    expect(index).toContain("if (refreshInFlight) return");
+    expect(index).toContain("const ts = Date.now()");
+    expect(index).toContain("loadData(ts)");
+    expect(index).toContain("renderData(latest, history, summaries)");
+    expect(index).toContain("refreshInFlight = false");
+    expect(index).toContain('fetchJson("latest.json", suffix)');
+    expect(index).toContain('fetchJson("history-7d.json", suffix)');
+    expect(index).toContain('fetchJson("daily-summary.json", suffix)');
+    expect(index).toContain("if (!response.ok) throw new Error");
     db.close();
   });
 
@@ -229,7 +239,7 @@ describe("static export", () => {
 
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain('const dataBaseUrl = "https://data.example.com/perp";');
-    expect(index).toContain('fetch(dataUrl("latest.json"))');
+    expect(index).toContain("fetch(dataUrl(name) + suffix)");
     db.close();
   });
 });
