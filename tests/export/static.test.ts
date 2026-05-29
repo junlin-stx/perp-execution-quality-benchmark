@@ -32,4 +32,36 @@ describe("static export", () => {
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
     db.close();
   });
+
+  it("renders latest metrics as market comparison panels with best and delta cues", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    db.upsertVenueMarketStatus({ venue: "standx", market: "SOL", symbol: "SOL-USD", status: "not_listed", reason: "not in symbol list" });
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain("id=\"comparison\"");
+    expect(index).toContain("market-panel");
+    expect(index).toContain("Best");
+    expect(index).toContain("vs best");
+    expect(index).toContain("depthRatio");
+    expect(index).toContain("N/A: not listed");
+    expect(index).not.toContain("<tbody id=\"grid\"></tbody>");
+    db.close();
+  });
+
+  it("includes responsive metric labels so narrow screens do not hide comparison columns", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain("data-label='\" + label + \"'");
+    expect(index).toContain("\"100k Slippage\"");
+    expect(index).toContain("td::before");
+    expect(index).toContain("grid-template-columns: repeat(3, minmax(0, 1fr))");
+    db.close();
+  });
 });

@@ -11,13 +11,24 @@
     h1 { margin: 0 0 8px; font-size: 28px; letter-spacing: 0; }
     p { margin: 0; line-height: 1.5; color: #4c5560; }
     main { padding: 24px 32px 40px; max-width: 1280px; margin: 0 auto; }
-    table { border-collapse: collapse; width: 100%; background: #ffffff; border: 1px solid #d8d2c5; }
-    th, td { padding: 10px 12px; border-bottom: 1px solid #e8e2d6; text-align: left; font-size: 14px; }
-    th { background: #22333b; color: #ffffff; position: sticky; top: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid #e8e2d6; text-align: left; font-size: 14px; vertical-align: top; }
+    th { color: #59636d; font-size: 12px; font-weight: 700; text-transform: uppercase; }
     h2 { margin: 28px 0 10px; font-size: 20px; letter-spacing: 0; }
     .muted { color: #6c747d; }
     .status { font-weight: 650; }
     .toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .comparison-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .market-panel { background: #ffffff; border: 1px solid #d8d2c5; min-width: 0; }
+    .market-panel h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 12px 14px; border-bottom: 1px solid #e8e2d6; background: #22333b; color: #ffffff; font-size: 18px; }
+    .market-panel h2 span { color: #dce8e4; font-size: 12px; font-weight: 600; }
+    .venue-name { font-weight: 750; white-space: nowrap; }
+    .metric-value { display: block; font-variant-numeric: tabular-nums; font-weight: 720; }
+    .metric-note { display: block; margin-top: 3px; color: #6c747d; font-size: 12px; line-height: 1.25; }
+    .best-cell { background: #eef8f3; }
+    .worst-cell { background: #fff3ec; }
+    .best-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: #0d6b4f; color: #ffffff; font-size: 11px; font-weight: 750; }
+    .na-row { color: #6c747d; background: #faf8f3; }
     .history-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
     .history-panel { background: #ffffff; border: 1px solid #d8d2c5; padding: 12px; min-width: 0; }
     .history-panel h3 { margin: 0 0 8px; font-size: 15px; letter-spacing: 0; }
@@ -27,7 +38,17 @@
     .summary-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .summary-list li { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px 12px; line-height: 1.45; }
     a { color: #0d5c63; }
-    @media (max-width: 820px) { .history-grid { grid-template-columns: 1fr; } main { padding: 18px; } }
+    @media (max-width: 1100px) { .comparison-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 820px) {
+      .history-grid { grid-template-columns: 1fr; }
+      main { padding: 18px; }
+      .market-panel table, .market-panel tbody, .market-panel tr, .market-panel td { display: block; }
+      .market-panel thead { display: none; }
+      .market-panel tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid #e8e2d6; }
+      .market-panel td { min-width: 0; padding: 9px 8px; border-bottom: 0; font-size: 13px; }
+      .market-panel td::before { content: attr(data-label); display: block; margin-bottom: 3px; color: #6c747d; font-size: 10px; font-weight: 750; text-transform: uppercase; }
+      .market-panel .venue-name, .market-panel .status { grid-column: span 1; }
+    }
   </style>
 </head>
 <body>
@@ -40,19 +61,10 @@
       <p class="muted" id="freshness">Loading latest data...</p>
       <a href="methodology.html">Methodology</a>
     </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Venue</th>
-          <th>Market</th>
-          <th>Status</th>
-          <th>Spread (bp)</th>
-          <th>10bp Depth (USD)</th>
-          <th>100k Slippage (bp)</th>
-        </tr>
-      </thead>
-      <tbody id="grid"></tbody>
-    </table>
+    <section aria-labelledby="comparison-title">
+      <h2 id="comparison-title">Latest Comparison</h2>
+      <div class="comparison-grid" id="comparison"></div>
+    </section>
     <section aria-labelledby="summary-title">
       <h2 id="summary-title">Daily Summary</h2>
       <p class="muted" id="summary-note">Loading daily summaries...</p>
@@ -79,23 +91,79 @@
         document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
         const rowMap = new Map();
         for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
-        document.getElementById("grid").innerHTML = venues.flatMap((venue) => markets.map((market) => {
-          const target = latest.targets.find((item) => item.venue === venue && item.market === market);
-          const row = rowMap.get(venue + ":" + market);
-          const notListed = target && target.status === "not_listed";
-          const status = notListed ? "N/A: not listed" : (row?.status ?? "no sample");
-          return "<tr>" +
-            "<td>" + labels[venue] + "</td>" +
-            "<td>" + market + "</td>" +
-            "<td class='status'>" + status + "</td>" +
-            "<td>" + (notListed ? "N/A" : fmt(row?.spread_bp, 3)) + "</td>" +
-            "<td>" + (notListed ? "N/A" : fmt(row?.depth_10bp_total_usd, 0)) + "</td>" +
-            "<td>" + (notListed ? "N/A" : fmt(row?.avg_slippage_100k_bp, 3)) + "</td>" +
-            "</tr>";
-        })).join("");
+        renderComparison(latest, rowMap);
         renderSummaries(summaries);
         renderHistory(history);
       });
+
+    function renderComparison(latest, rowMap) {
+      document.getElementById("comparison").innerHTML = markets.map((market) => {
+        const rows = venues.map((venue) => {
+          const target = latest.targets.find((item) => item.venue === venue && item.market === market);
+          const row = rowMap.get(venue + ":" + market);
+          const notListed = target && target.status === "not_listed";
+          return { venue, target, row, notListed, status: notListed ? "N/A: not listed" : (row?.status ?? "no sample") };
+        });
+        const spreadBest = metricBest(rows, "spread_bp", "low");
+        const spreadWorst = metricBest(rows, "spread_bp", "high");
+        const depthBest = metricBest(rows, "depth_10bp_total_usd", "high");
+        const depthWorst = metricBest(rows, "depth_10bp_total_usd", "low");
+        const slipBest = metricBest(rows, "avg_slippage_100k_bp", "low");
+        const slipWorst = metricBest(rows, "avg_slippage_100k_bp", "high");
+        const validCount = rows.filter((item) => metricValue(item, "spread_bp") !== null).length;
+        return "<article class='market-panel'>" +
+          "<h2>" + market + "<span>" + validCount + "/4 live</span></h2>" +
+          "<table><thead><tr>" +
+            "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th>" +
+          "</tr></thead><tbody>" +
+          rows.map((item) => {
+            const rowClass = item.notListed ? " class='na-row'" : "";
+            return "<tr" + rowClass + ">" +
+              "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
+              "<td class='status' data-label='Status'>" + item.status + "</td>" +
+              metricCell(item, "spread_bp", "Spread", "bp", spreadBest, spreadWorst, spreadDelta) +
+              metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthWorst, depthRatio) +
+              metricCell(item, "avg_slippage_100k_bp", "100k Slippage", "bp", slipBest, slipWorst, spreadDelta) +
+            "</tr>";
+          }).join("") +
+          "</tbody></table>" +
+        "</article>";
+      }).join("");
+    }
+
+    function metricCell(item, key, label, unit, best, worst, deltaFn) {
+      const value = metricValue(item, key);
+      if (value === null) return "<td data-label='" + label + "'><span class='metric-value'>N/A</span><span class='metric-note'>No comparable sample</span></td>";
+      const isBest = best !== null && value === best;
+      const isWorst = worst !== null && value === worst && value !== best;
+      const className = isBest ? " class='best-cell'" : (isWorst ? " class='worst-cell'" : "");
+      const display = unit === "usd" ? "$" + fmt(value, 0) : fmt(value, 3) + " bp";
+      const badge = isBest ? "<span class='best-badge'>Best</span>" : "";
+      const note = isBest ? "best in market" : deltaFn(value, best);
+      const attrs = className ? className.replace(">", "") + " data-label='" + label + "'" : " data-label='" + label + "'";
+      return "<td" + attrs + "><span class='metric-value'>" + display + badge + "</span><span class='metric-note'>" + note + "</span></td>";
+    }
+
+    function metricValue(item, key) {
+      const value = item.row?.[key];
+      return typeof value === "number" && Number.isFinite(value) ? value : null;
+    }
+
+    function metricBest(rows, key, direction) {
+      const values = rows.map((item) => metricValue(item, key)).filter((value) => value !== null);
+      if (!values.length) return null;
+      return direction === "low" ? Math.min(...values) : Math.max(...values);
+    }
+
+    function spreadDelta(value, best) {
+      if (best === null) return "No benchmark";
+      return "+" + fmt(Math.max(0, value - best), 3) + " bp vs best";
+    }
+
+    function depthRatio(value, best) {
+      if (best === null || best === 0) return "No benchmark";
+      return fmt(value / best, 2) + "x best depth";
+    }
 
     function renderSummaries(summaries) {
       const rows = Array.isArray(summaries) ? summaries.slice(0, 6) : [];
