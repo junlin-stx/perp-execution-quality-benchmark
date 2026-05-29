@@ -1,0 +1,66 @@
+name: Benchmark Pages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: benchmark-pages
+  cancel-in-progress: false
+
+jobs:
+  collect-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Restore SQLite history
+        uses: actions/cache@v4
+        with:
+          path: data/benchmark.sqlite
+          key: benchmark-sqlite-${{ github.run_id }}
+          restore-keys: |
+            benchmark-sqlite-
+
+      - name: Verify
+        run: |
+          npm test
+          npm run typecheck
+
+      - name: Collect once and export
+        run: |
+          npm run run:benchmark -- --once
+          npm run summary
+          npm run export
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
