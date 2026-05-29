@@ -111,16 +111,27 @@ The GitHub Pages workflow uses `PUBLIC_DATA_BASE_URL` when rendering the page an
 Set a CORS policy on the R2 bucket so GitHub Pages can fetch JSON from the R2 domain:
 
 ```json
-[
-  {
-    "AllowedOrigins": [
-      "https://junlin-stx.github.io",
-      "http://localhost:4173"
-    ],
-    "AllowedMethods": ["GET"],
-    "MaxAgeSeconds": 3600
-  }
-]
+{
+  "rules": [
+    {
+      "allowed": {
+        "origins": [
+          "https://junlin-stx.github.io",
+          "http://localhost:4173"
+        ],
+        "methods": ["GET"]
+      },
+      "maxAgeSeconds": 3600
+    }
+  ]
+}
+```
+
+Apply it with:
+
+```bash
+npx wrangler r2 bucket cors set perp-bench --file cors.json
+npx wrangler r2 bucket cors list perp-bench
 ```
 
 After changing CORS on a custom R2 domain, purge that hostname from Cloudflare Cache before testing in the browser.
