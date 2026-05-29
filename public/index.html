@@ -53,7 +53,7 @@
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Binance Perps, Aevo, and StandX.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -76,9 +76,9 @@
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "binance_perps", "aevo", "standx"];
+    const venues = ["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"];
     const markets = ["BTC", "ETH", "SOL"];
-    const labels = { hyperliquid: "Hyperliquid", binance_perps: "Binance Perps", aevo: "Aevo", standx: "StandX" };
+    const labels = { hyperliquid: "Hyperliquid", binance_perps: "Binance Perps", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([
@@ -111,7 +111,7 @@
         const slipWorst = metricBest(rows, "avg_slippage_100k_bp", "high");
         const validCount = rows.filter((item) => metricValue(item, "spread_bp") !== null).length;
         return "<article class='market-panel'>" +
-          "<h2>" + market + "<span>" + validCount + "/4 live</span></h2>" +
+          "<h2>" + market + "<span>" + validCount + "/" + venues.length + " live</span></h2>" +
           "<table><thead><tr>" +
             "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th>" +
           "</tr></thead><tbody>" +

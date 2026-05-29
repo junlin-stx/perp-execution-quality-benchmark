@@ -1,6 +1,6 @@
 # Perp Execution Quality Benchmark
 
-Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, and StandX.
+Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.
 
 Public repo: https://github.com/junlin-stx/perp-execution-quality-benchmark
 Public benchmark: https://junlin-stx.github.io/perp-execution-quality-benchmark/
@@ -11,7 +11,7 @@ The first phase compares BTC, ETH, and SOL using:
 - 10bp depth
 - estimated slippage for a 100,000 USD taker order
 
-This is not a trading signal, paid product, liquidation monitor, whale tracker, vault dashboard, or StandX marketing page.
+This is not a trading signal, paid product, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.
 
 ## Install
 

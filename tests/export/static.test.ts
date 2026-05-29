@@ -21,6 +21,10 @@ describe("static export", () => {
     exportStaticSite(db, join(tempDir, "public"));
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("Perp Execution Quality");
+    expect(index).toContain("const venues = [\"hyperliquid\", \"binance_perps\", \"aevo\", \"standx\", \"aster\", \"edgex\"]");
+    expect(index).toContain("Aster");
+    expect(index).toContain("edgeX");
+    expect(index).toContain("validCount + \"/\" + venues.length + \" live</span>");
     expect(index).toContain("7 Day History");
     expect(index).toContain("data/history-7d.json");
     expect(index).toContain("id=\"history\"");

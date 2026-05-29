@@ -84,7 +84,7 @@ function indexHtml(): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Binance Perps, Aevo, and StandX.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -107,9 +107,9 @@ function indexHtml(): string {
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "binance_perps", "aevo", "standx"];
+    const venues = ["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"];
     const markets = ["BTC", "ETH", "SOL"];
-    const labels = { hyperliquid: "Hyperliquid", binance_perps: "Binance Perps", aevo: "Aevo", standx: "StandX" };
+    const labels = { hyperliquid: "Hyperliquid", binance_perps: "Binance Perps", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([
@@ -142,7 +142,7 @@ function indexHtml(): string {
         const slipWorst = metricBest(rows, "avg_slippage_100k_bp", "high");
         const validCount = rows.filter((item) => metricValue(item, "spread_bp") !== null).length;
         return "<article class='market-panel'>" +
-          "<h2>" + market + "<span>" + validCount + "/4 live</span></h2>" +
+          "<h2>" + market + "<span>" + validCount + "/" + venues.length + " live</span></h2>" +
           "<table><thead><tr>" +
             "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th>" +
           "</tr></thead><tbody>" +
@@ -253,7 +253,7 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Binance Perps, Aevo, and StandX on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or StandX marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
@@ -261,6 +261,8 @@ function methodologyHtml(): string {
     <li>Binance Perps: <code>GET https://fapi.binance.com/fapi/v1/depth</code> for USD-M futures. Binance RPI liquidity is not included in this public book.</li>
     <li>Aevo: <code>GET https://api.aevo.xyz/orderbook</code> by <code>instrument_name</code>.</li>
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
+    <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
+    <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
   </ul>
 
   <h2>Cadence</h2>
@@ -287,6 +289,7 @@ function methodologyHtml(): string {
     <li>Hyperliquid public books are limited to 20 levels per side.</li>
     <li>Binance RPI orders are not represented in the public depth endpoint.</li>
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
+    <li>Aster and edgeX are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
 </main>
 </body>

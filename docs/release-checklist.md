@@ -60,7 +60,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
 Before launch, verify the methodology page states:
 
 - Metric formulas for spread, 10bp depth, and 100,000 USD taker slippage.
-- Data sources for Hyperliquid, Binance Perps, Aevo, and StandX.
+- Data sources for Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.
 - 30 to 60 second collection cadence.
 - 5 minute static export cadence.
 - Binance RPI public-book limitation.

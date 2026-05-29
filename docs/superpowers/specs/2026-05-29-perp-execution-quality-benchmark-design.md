@@ -2,11 +2,11 @@
 
 ## Goal
 
-Build an open, reproducible perp execution quality benchmark that compares Hyperliquid, Binance Perps, Aevo, and StandX on BTC, ETH, and SOL using one shared methodology. The first phase is not a trading signal, paid product, or full web application. Its purpose is to test whether traders trust the data collection and calculations enough to cite, share, dispute, and improve them without dismissing the benchmark.
+Build an open, reproducible perp execution quality benchmark that compares Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX on BTC, ETH, and SOL using one shared methodology. The first phase is not a trading signal, paid product, or full web application. Its purpose is to test whether traders trust the data collection and calculations enough to cite, share, dispute, and improve them without dismissing the benchmark.
 
 ## Non-Goals
 
-The benchmark will not include paid access, login, custom alerts, a fifth venue, a fourth market, liquidation analysis, whale tracking, vault analysis, or StandX-specific marketing treatment. StandX is one execution venue in the same comparison grid as Hyperliquid, Binance Perps, and Aevo.
+The benchmark will not include paid access, login, custom alerts, a fourth market, liquidation analysis, whale tracking, vault analysis, or venue-specific marketing treatment. StandX, Aster, and edgeX are execution venues in the same comparison grid as Hyperliquid, Binance Perps, and Aevo.
 
 ## Scope
 
@@ -16,6 +16,8 @@ The first phase includes exactly these venues:
 - Binance Perps
 - Aevo
 - StandX
+- Aster
+- edgeX
 
 The first phase includes exactly these markets:
 
@@ -29,7 +31,7 @@ The first phase includes exactly these public metrics:
 - 10bp depth
 - Estimated slippage for a 100,000 USD taker order
 
-The public page keeps the 4 venue x 3 market x 3 metric grid even when a venue does not list a market. As of the latest probe on 2026-05-29, StandX lists BTC-USD and ETH-USD but not SOL-USD. The StandX SOL cells will show `N/A: not listed` instead of substituting another market or hiding the row.
+The public page keeps the venue x market x metric grid even when a venue does not list a market. As of the latest probe on 2026-05-29, StandX lists BTC-USD and ETH-USD but not SOL-USD. The StandX SOL cells will show `N/A: not listed` instead of substituting another market or hiding the row.
 
 ## Data Sources
 
@@ -41,6 +43,8 @@ Use public order book endpoints only. Do not use private accounts, privileged ma
 | Binance Perps | BTCUSDT, ETHUSDT, SOLUSDT | `GET https://fapi.binance.com/fapi/v1/depth` | Use USD-M futures. RPI liquidity is not included in the public book. |
 | Aevo | BTC-PERP, ETH-PERP, SOL-PERP | `GET https://api.aevo.xyz/orderbook` | Use public snapshot response by `instrument_name`. |
 | StandX | BTC-USD, ETH-USD, SOL unavailable | `GET https://perps.standx.com/api/query_depth_book` | Sort bids descending and asks ascending client-side. Confirm available markets through `query_symbol_info`. |
+| Aster | BTCUSDT, ETHUSDT, SOLUSDT | `GET https://fapi.asterdex.com/fapi/v1/depth` | USDT-margined perpetual futures. |
+| edgeX | BTCUSD, ETHUSD, SOLUSD | `GET https://pro.edgex.exchange/api/v1/public/quote/getDepth` | Public REST snapshot with fixed depth levels; request level 200. |
 
 Every sample stores the source URL label, normalized venue, normalized market, venue-native symbol, fetch latency, source timestamp when available, local collection timestamp, level count, partial-data flag, and error reason when a fetch or normalization step fails.
 
@@ -139,7 +143,7 @@ Required files:
 
 The static page displays:
 
-- Latest 4 venue x 3 market x 3 metric grid.
+- Latest venue x 3 market x 3 metric grid.
 - `N/A: not listed` states for unavailable venue-market pairs.
 - 7 day history for each metric and market.
 - Data freshness, failed fetch counts, and methodology links.
@@ -229,4 +233,3 @@ Before calling the benchmark public, verify:
 ## Success Criteria
 
 After four weeks, continue only if traders treat the benchmark as credible enough to cite, repost, challenge with better data, or critique specific methodology choices without rejecting the project as marketing or a black-box ranking.
-

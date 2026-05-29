@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first public perp execution quality benchmark for Hyperliquid, Binance Perps, Aevo, and StandX across BTC, ETH, and SOL with spread, 10bp depth, and 100,000 USD estimated slippage.
+**Goal:** Build the first public perp execution quality benchmark for Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX across BTC, ETH, and SOL with spread, 10bp depth, and 100,000 USD estimated slippage.
 
 **Architecture:** Implement a collector-first TypeScript project. Venue adapters normalize public order books, pure metric functions compute execution quality, SQLite stores append-only samples, and export jobs generate static public HTML/JSON plus daily summary and Telegram anomaly dry-run output.
 
@@ -116,7 +116,7 @@ Create `README.md`:
 ```markdown
 # Perp Execution Quality Benchmark
 
-Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, and StandX.
+Open collector and static benchmark for basic perp execution quality across Hyperliquid, Binance Perps, Aevo, StandX, Aster, and edgeX.
 
 The first phase compares BTC, ETH, and SOL using:
 
@@ -200,8 +200,8 @@ import { describe, expect, it } from "vitest";
 import { collectionTargets, markets, venues } from "../../src/config/markets.js";
 
 describe("fixed benchmark universe", () => {
-  it("keeps exactly 4 venues and 3 markets", () => {
-    expect(venues).toEqual(["hyperliquid", "binance_perps", "aevo", "standx"]);
+  it("keeps exactly 6 venues and 3 markets", () => {
+    expect(venues).toEqual(["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"]);
     expect(markets).toEqual(["BTC", "ETH", "SOL"]);
   });
 
@@ -227,7 +227,7 @@ Expected: FAIL because `src/config/markets.ts` does not exist.
 Create `src/config/markets.ts`:
 
 ```ts
-export const venues = ["hyperliquid", "binance_perps", "aevo", "standx"] as const;
+export const venues = ["hyperliquid", "binance_perps", "aevo", "standx", "aster", "edgex"] as const;
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
