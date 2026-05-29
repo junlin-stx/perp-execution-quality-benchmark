@@ -53,6 +53,12 @@ jobs:
           npm run summary
           npm run export
 
+      - name: Send Telegram anomalies
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: npm run telegram:send-anomalies
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 

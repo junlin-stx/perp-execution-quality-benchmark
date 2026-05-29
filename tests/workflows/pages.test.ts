@@ -10,6 +10,9 @@ describe("benchmark pages workflow", () => {
     expect(workflow).toContain("data/benchmark.sqlite");
     expect(workflow).toContain("npm run run:benchmark -- --once");
     expect(workflow).toContain("npm run summary");
+    expect(workflow).toContain("npm run telegram:send-anomalies");
+    expect(workflow).toContain("TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}");
+    expect(workflow).toContain("TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}");
     expect(workflow).toContain("actions/upload-pages-artifact");
     expect(workflow).toContain("actions/deploy-pages");
   });
