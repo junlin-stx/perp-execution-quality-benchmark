@@ -1,4 +1,4 @@
-import { markets, type Market, type Venue } from "../config/markets.js";
+import { benchmarkVenues, markets, referenceVenues, type Market, type Venue } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
 export interface DailyVenueMetric {
@@ -19,9 +19,15 @@ const venueLabels: Record<Venue, string> = {
   nado: "Nado"
 };
 
+const benchmarkVenueSet = new Set<Venue>(benchmarkVenues);
+const referenceVenueSet = new Set<Venue>(referenceVenues);
+
 export function buildDailySummaryText(_utcDate: string, market: Market, rows: DailyVenueMetric[]): string {
   const listed = rows
-    .filter((row) => row.status === "listed" && row.medianSlippageBp !== null)
+    .filter((row) => row.status === "listed" && row.medianSlippageBp !== null && benchmarkVenueSet.has(row.venue))
+    .sort((a, b) => Number(a.medianSlippageBp) - Number(b.medianSlippageBp));
+  const references = rows
+    .filter((row) => row.status === "listed" && row.medianSlippageBp !== null && referenceVenueSet.has(row.venue))
     .sort((a, b) => Number(a.medianSlippageBp) - Number(b.medianSlippageBp));
   const notListed = rows.filter((row) => row.status === "not_listed");
   const parts: string[] = [];
@@ -35,7 +41,11 @@ export function buildDailySummaryText(_utcDate: string, market: Market, rows: Da
     });
     parts.push(`Yesterday ${market} 100k taker execution: ${venueLabels[best.venue]} best at ${bestValue.toFixed(2)} bp${comparisons.length ? `, ${comparisons.join(", ")}` : ""}.`);
   } else {
-    parts.push(`Yesterday ${market} 100k taker execution: no listed venue had enough valid public samples.`);
+    parts.push(`Yesterday ${market} 100k taker execution: no benchmark venue had enough valid public samples.`);
+  }
+
+  if (references.length > 0) {
+    parts.push(`Reference only: ${references.map((row) => `${venueLabels[row.venue]} ${Number(row.medianSlippageBp).toFixed(2)} bp`).join(", ")}.`);
   }
 
   for (const row of notListed) {

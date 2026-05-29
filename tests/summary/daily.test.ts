@@ -13,15 +13,18 @@ afterEach(() => {
 });
 
 describe("daily summary", () => {
-  it("ranks venues by median 100k slippage and states not-listed markets", () => {
+  it("ranks benchmark venues by median 100k slippage and states not-listed markets", () => {
     const text = buildDailySummaryText("2026-05-28", "BTC", [
       { venue: "aster", market: "BTC", medianSlippageBp: 1.2, status: "listed" },
       { venue: "hyperliquid", market: "BTC", medianSlippageBp: 1.6, status: "listed" },
       { venue: "grvt", market: "BTC", medianSlippageBp: 3.3, status: "listed" },
       { venue: "standx", market: "BTC", medianSlippageBp: 4.2, status: "listed" }
     ]);
-    expect(text).toContain("Yesterday BTC 100k taker execution: Aster best at 1.20 bp");
-    expect(text).toContain("Hyperliquid +0.40 bp");
+    expect(text).toContain("Yesterday BTC 100k taker execution: GRVT best at 3.30 bp");
+    expect(text).toContain("StandX +0.90 bp");
+    expect(text).toContain("Reference only: Aster 1.20 bp, Hyperliquid 1.60 bp.");
+    expect(text).not.toContain("Aster best");
+    expect(text).not.toContain("Hyperliquid +");
   });
 
   it("mentions StandX SOL as not listed", () => {
@@ -82,7 +85,8 @@ describe("daily summary", () => {
 
     const [btcSummary] = generateDailySummaries(db, utcDate);
 
-    expect(btcSummary).toContain("Hyperliquid best at 100.00 bp");
+    expect(btcSummary).toContain("no benchmark venue had enough valid public samples");
+    expect(btcSummary).toContain("Reference only: Hyperliquid 100.00 bp.");
     expect(btcSummary).not.toContain("67.33 bp");
     db.close();
   });

@@ -22,11 +22,13 @@ describe("static export", () => {
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("Perp Execution Quality");
     expect(index).toContain("const venues = [\"hyperliquid\", \"standx\", \"aster\", \"edgex\", \"grvt\", \"lighter\", \"extended\", \"nado\"]");
+    expect(index).toContain("const benchmarkVenues = [\"standx\",\"edgex\",\"grvt\",\"lighter\",\"extended\",\"nado\"]");
+    expect(index).toContain("const referenceVenues = [\"hyperliquid\",\"aster\"]");
     expect(index).not.toContain("Binance Perps");
     expect(index).not.toContain("Aevo");
     expect(index).toContain("Aster");
     expect(index).toContain("edgeX");
-    expect(index).toContain("validCount + \"/\" + venues.length + \" live</span>");
+    expect(index).toContain("validCount + \"/\" + benchmarkVenues.length + \" benchmark live</span>");
     expect(index).toContain("7 Day History");
     expect(index).toContain('dataUrl("history-7d.json")');
     expect(index).toContain("id=\"history\"");
@@ -81,8 +83,11 @@ describe("static export", () => {
     expect(index).toContain("id=\"comparison\"");
     expect(index).toContain("market-panel");
     expect(index).toContain("Best");
+    expect(index).toContain("Reference");
     expect(index).toContain("vs best");
     expect(index).toContain("depthRatio");
+    expect(index).toContain("benchmarkRows");
+    expect(index).toContain("Reference only");
     expect(index).toContain("N/A: not listed");
     expect(index).not.toContain("<tbody id=\"grid\"></tbody>");
     db.close();

@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { collectionTargets, venues } from "../config/markets.js";
+import { benchmarkVenues, collectionTargets, referenceVenues, venues } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
 export interface StaticSiteOptions {
@@ -147,6 +147,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     .best-cell { background: #eef8f3; }
     .worst-cell { background: #fff3ec; }
     .best-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: #0d6b4f; color: #ffffff; font-size: 11px; font-weight: 750; }
+    .reference-row { background: #f2f7f8; }
+    .reference-badge { display: inline-block; margin-left: 6px; padding: 1px 5px; border-radius: 4px; background: #365f6b; color: #ffffff; font-size: 11px; font-weight: 750; }
     .na-row { color: #6c747d; background: #faf8f3; }
     .history-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
     .history-panel { background: #ffffff; border: 1px solid #d8d2c5; padding: 12px; min-width: 0; }
@@ -172,7 +174,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across StandX, edgeX, GRVT, Lighter, Extended, and Nado, with Hyperliquid and Aster shown as reference venues.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -196,6 +198,9 @@ function indexHtml(options: StaticSiteOptions = {}): string {
   </main>
   <script>
     const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter", "extended", "nado"];
+    const benchmarkVenues = ${JSON.stringify(benchmarkVenues)};
+    const referenceVenues = ${JSON.stringify(referenceVenues)};
+    const displayVenues = benchmarkVenues.concat(referenceVenues);
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
     const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
@@ -230,28 +235,31 @@ function indexHtml(options: StaticSiteOptions = {}): string {
 
     function renderComparison(latest, rowMap) {
       document.getElementById("comparison").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
-        const rows = venues.map((venue) => {
+        const rows = displayVenues.map((venue) => {
           const target = latest.targets.find((item) => item.venue === venue && item.market === market);
           const row = rowMap.get(venue + ":" + market);
           const notListed = target && target.status === "not_listed";
-          return { venue, target, row, notListed, status: notListed ? "N/A: not listed" : (row?.status ?? "no sample") };
+          const reference = referenceVenues.includes(venue);
+          const status = notListed ? "N/A: not listed" : (row?.status ?? "no sample");
+          return { venue, target, row, notListed, reference, status: reference ? status + " - Reference" : status };
         });
-        const spreadBest = metricBest(rows, "spread_bp", "low");
-        const spreadWorst = metricBest(rows, "spread_bp", "high");
-        const depthBest = metricBest(rows, "depth_10bp_total_usd", "high");
-        const depthWorst = metricBest(rows, "depth_10bp_total_usd", "low");
-        const slipBest = metricBest(rows, "avg_slippage_100k_bp", "low");
-        const slipWorst = metricBest(rows, "avg_slippage_100k_bp", "high");
-        const slip1mBest = metricBest(rows, "avg_slippage_1m_bp", "low");
-        const slip1mWorst = metricBest(rows, "avg_slippage_1m_bp", "high");
-        const validCount = rows.filter((item) => metricValue(item, "spread_bp") !== null).length;
+        const benchmarkRows = rows.filter((item) => !item.reference);
+        const spreadBest = metricBest(benchmarkRows, "spread_bp", "low");
+        const spreadWorst = metricBest(benchmarkRows, "spread_bp", "high");
+        const depthBest = metricBest(benchmarkRows, "depth_10bp_total_usd", "high");
+        const depthWorst = metricBest(benchmarkRows, "depth_10bp_total_usd", "low");
+        const slipBest = metricBest(benchmarkRows, "avg_slippage_100k_bp", "low");
+        const slipWorst = metricBest(benchmarkRows, "avg_slippage_100k_bp", "high");
+        const slip1mBest = metricBest(benchmarkRows, "avg_slippage_1m_bp", "low");
+        const slip1mWorst = metricBest(benchmarkRows, "avg_slippage_1m_bp", "high");
+        const validCount = benchmarkRows.filter((item) => metricValue(item, "spread_bp") !== null).length;
         return "<article class='market-panel'>" +
-          "<h2>" + market + "<span>" + validCount + "/" + venues.length + " live</span></h2>" +
+          "<h2>" + market + "<span>" + validCount + "/" + benchmarkVenues.length + " benchmark live</span></h2>" +
           "<table><thead><tr>" +
             "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
           "</tr></thead><tbody>" +
           rows.map((item) => {
-            const rowClass = item.notListed ? " class='na-row'" : "";
+            const rowClass = item.notListed ? " class='na-row'" : (item.reference ? " class='reference-row'" : "");
             return "<tr" + rowClass + ">" +
               "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
               "<td class='status' data-label='Status'>" + item.status + "</td>" +
@@ -269,13 +277,13 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     function metricCell(item, key, label, unit, best, worst, deltaFn) {
       const value = metricValue(item, key);
       if (value === null) return "<td data-label='" + label + "'><span class='metric-value'>N/A</span><span class='metric-note'>No comparable sample</span></td>";
-      const isBest = best !== null && value === best;
-      const isWorst = worst !== null && value === worst && value !== best;
-      const className = isBest ? " class='best-cell'" : (isWorst ? " class='worst-cell'" : "");
+      const isBest = !item.reference && best !== null && value === best;
+      const isWorst = !item.reference && worst !== null && value === worst && value !== best;
+      const className = isBest ? "best-cell" : (isWorst ? "worst-cell" : "");
       const display = unit === "usd" ? "$" + fmt(value, 0) : fmt(value, 3) + " bp";
-      const badge = isBest ? "<span class='best-badge'>Best</span>" : "";
-      const note = isBest ? "best in market" : deltaFn(value, best);
-      const attrs = className ? className.replace(">", "") + " data-label='" + label + "'" : " data-label='" + label + "'";
+      const badge = isBest ? "<span class='best-badge'>Best</span>" : (item.reference ? "<span class='reference-badge'>Reference</span>" : "");
+      const note = item.reference ? "Reference only" : (isBest ? "best in market" : deltaFn(value, best));
+      const attrs = (className ? " class='" + className + "'" : "") + " data-label='" + label + "'";
       return "<td" + attrs + "><span class='metric-value'>" + display + badge + "</span><span class='metric-note'>" + note + "</span></td>";
     }
 
@@ -359,7 +367,7 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for StandX, edgeX, GRVT, Lighter, Extended, and Nado on BTC, ETH, and SOL, with Hyperliquid and Aster shown as reference venues only. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
@@ -396,8 +404,9 @@ function methodologyHtml(): string {
     <li>Only public order book data is used.</li>
     <li>Hidden, private, or venue-internal liquidity is not measured.</li>
     <li>Hyperliquid public books are limited to 20 levels per side.</li>
+    <li>Hyperliquid and Aster are displayed as reference venues and are excluded from public <code>Best</code> calculations and daily winner summaries.</li>
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
-    <li>Aster, edgeX, GRVT, Lighter, Extended, and Nado are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
+    <li>edgeX, GRVT, Lighter, Extended, and Nado are included as emerging benchmark venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
 </main>
 </body>

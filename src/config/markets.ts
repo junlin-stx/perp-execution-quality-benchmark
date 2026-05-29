@@ -1,7 +1,10 @@
 export const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter", "extended", "nado"] as const;
+export const referenceVenues = ["hyperliquid", "aster"] as const;
+export const benchmarkVenues = venues.filter((venue) => !referenceVenues.includes(venue as (typeof referenceVenues)[number]));
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
+export type ReferenceVenue = (typeof referenceVenues)[number];
 export type Market = (typeof markets)[number];
 export type VenueMarketStatus = "listed" | "not_listed";
 
