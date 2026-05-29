@@ -21,8 +21,10 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
 ## Required Before Public Launch
 
 1. Create a public Git repository and push this repo.
-   - Evidence: `git remote -v` shows the public remote.
-   - Evidence: public repository URL opens without authentication.
+   - Status: complete.
+   - Evidence: `git remote -v` shows `https://github.com/junlin-stx/perp-execution-quality-benchmark.git`.
+   - Evidence: public repository URL is `https://github.com/junlin-stx/perp-execution-quality-benchmark`.
+   - Evidence: `gh repo view junlin-stx/perp-execution-quality-benchmark --json name,visibility,url,defaultBranchRef` returns `visibility=PUBLIC` and `defaultBranchRef=main`.
    - Evidence: the public repository includes `LICENSE`.
 
 2. Deploy `public/` to a static host.
@@ -68,7 +70,6 @@ rg -n "RPI|20 levels|StandX SOL|100,000 USD|10bp|30 to 60 seconds|liquidation|wh
 
 ## Current External-State Gaps
 
-- No git remote is configured yet.
 - No public static deployment URL is configured yet.
 - No Telegram bot token or channel id is configured in this workspace.
 
