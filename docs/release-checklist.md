@@ -48,6 +48,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: `TELEGRAM_CHAT_ID` points to the public channel.
    - Evidence: the bot has permission to post.
    - Evidence: `npm run telegram:send-anomalies` exits successfully.
+   - Evidence: workflow `Benchmark Pages` run `26623363630` completed the `Send Telegram anomalies` step successfully with the current repository configuration.
 
 5. Publish the first daily summary after at least one UTC day of data.
    - Command: `npm run summary`
