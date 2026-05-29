@@ -92,6 +92,8 @@ function rollupHistory(rows: unknown[], bucketMs: number): unknown[] {
       symbol: first.symbol ?? null,
       sample_count: group.length,
       spread_bp: median(group.map((row) => numericValue(row.spread_bp))),
+      depth_3bp_total_usd: median(group.map((row) => numericValue(row.depth_3bp_total_usd))),
+      depth_5bp_total_usd: median(group.map((row) => numericValue(row.depth_5bp_total_usd))),
       depth_10bp_total_usd: median(group.map((row) => numericValue(row.depth_10bp_total_usd))),
       avg_slippage_100k_bp: median(group.map((row) => numericValue(row.avg_slippage_100k_bp))),
       avg_slippage_1m_bp: median(group.map((row) => numericValue(row.avg_slippage_1m_bp))),
@@ -174,7 +176,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across StandX, edgeX, GRVT, Lighter, Extended, and Nado, with Hyperliquid and Aster shown as reference venues.</p>
+    <p>Open benchmark for spread, 3bp / 5bp / 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across StandX, edgeX, GRVT, Lighter, Extended, and Nado, with Hyperliquid and Aster shown as reference venues.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -275,6 +277,10 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         const sortedRows = benchmarkRows.concat(referenceRows);
         const spreadBest = metricBest(benchmarkRows, "spread_bp", "low");
         const spreadWorst = metricBest(benchmarkRows, "spread_bp", "high");
+        const depth3Best = metricBest(benchmarkRows, "depth_3bp_total_usd", "high");
+        const depth3Worst = metricBest(benchmarkRows, "depth_3bp_total_usd", "low");
+        const depth5Best = metricBest(benchmarkRows, "depth_5bp_total_usd", "high");
+        const depth5Worst = metricBest(benchmarkRows, "depth_5bp_total_usd", "low");
         const depthBest = metricBest(benchmarkRows, "depth_10bp_total_usd", "high");
         const depthWorst = metricBest(benchmarkRows, "depth_10bp_total_usd", "low");
         const slipBest = metricBest(benchmarkRows, "avg_slippage_100k_bp", "low");
@@ -285,7 +291,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         return "<article class='market-panel'>" +
           "<h2>" + market + "<span>" + validCount + "/" + benchmarkVenues.length + " benchmark live</span></h2>" +
           "<table><thead><tr>" +
-            "<th>Venue</th><th>Status</th><th>Spread</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
+            "<th>Venue</th><th>Status</th><th>Spread</th><th>3bp Depth</th><th>5bp Depth</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
           "</tr></thead><tbody>" +
           sortedRows.map((item) => {
             const rowClass = item.notListed ? " class='na-row'" : (item.reference ? " class='reference-row'" : "");
@@ -293,6 +299,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
               "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
               "<td class='status' data-label='Status'>" + item.status + "</td>" +
               metricCell(item, "spread_bp", "Spread", "bp", spreadBest, spreadWorst, spreadDelta) +
+              metricCell(item, "depth_3bp_total_usd", "3bp Depth", "usd", depth3Best, depth3Worst, depthRatio) +
+              metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depth5Worst, depthRatio) +
               metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthWorst, depthRatio) +
               metricCell(item, "avg_slippage_100k_bp", "100k Slippage", "bp", slipBest, slipWorst, spreadDelta) +
               metricCell(item, "avg_slippage_1m_bp", "1M Slippage", "bp", slip1mBest, slip1mWorst, spreadDelta) +
@@ -367,6 +375,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
           "<dl>" +
             "<dt>Samples</dt><dd>" + rows.length + "</dd>" +
             "<dt>Median spread</dt><dd>" + fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp</dd>" +
+            "<dt>Median 3bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0) + "</dd>" +
+            "<dt>Median 5bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0) + "</dd>" +
             "<dt>Median 10bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_10bp_total_usd)), 0) + "</dd>" +
             "<dt>Median 100k slippage</dt><dd>" + fmt(median(rows.map((row) => row.avg_slippage_100k_bp)), 3) + " bp</dd>" +
             "<dt>Median 1M slippage</dt><dd>" + fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp</dd>" +
@@ -425,10 +435,10 @@ function methodologyHtml(): string {
   <p><code>mid = (best_bid + best_ask) / 2</code></p>
   <p><code>spread_bp = ((best_ask - best_bid) / mid) * 10000</code></p>
 
-  <h2>10bp Depth</h2>
-  <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - 0.001)</code>.</p>
-  <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + 0.001)</code>.</p>
-  <p>The public table shows total 10bp depth while JSON keeps side breakdowns.</p>
+  <h2>3bp, 5bp, and 10bp Depth</h2>
+  <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - bp / 10000)</code>.</p>
+  <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + bp / 10000)</code>.</p>
+  <p>The public table shows total 3bp, 5bp, and 10bp depth while JSON keeps side breakdowns for collector metrics.</p>
 
   <h2>100,000 and 1,000,000 USD Estimated Taker Slippage</h2>
   <p>A buy order consumes asks from best ask upward until the target notional is filled. A sell order consumes bids from best bid downward. The public table shows both 100,000 USD and 1,000,000 USD average taker slippage.</p>

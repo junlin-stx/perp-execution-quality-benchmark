@@ -33,6 +33,12 @@ export interface ExecutionMetrics {
   localTimestampMs: number;
   midPrice: number | null;
   spreadBp: number | null;
+  depth3BpBidUsd: number | null;
+  depth3BpAskUsd: number | null;
+  depth3BpTotalUsd: number | null;
+  depth5BpBidUsd: number | null;
+  depth5BpAskUsd: number | null;
+  depth5BpTotalUsd: number | null;
   depth10BpBidUsd: number | null;
   depth10BpAskUsd: number | null;
   depth10BpTotalUsd: number | null;

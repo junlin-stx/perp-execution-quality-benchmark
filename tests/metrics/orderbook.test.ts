@@ -25,10 +25,16 @@ const book: NormalizedOrderBook = {
 };
 
 describe("orderbook metrics", () => {
-  it("calculates spread and 10bp depth", () => {
+  it("calculates spread and 3bp, 5bp, and 10bp depth", () => {
     const metrics = calculateExecutionMetrics(book);
     expect(metrics.midPrice).toBeCloseTo(100.05);
     expect(metrics.spreadBp).toBeCloseTo(9.995);
+    expect(metrics.depth3BpBidUsd).toBeCloseTo(50_000);
+    expect(metrics.depth3BpAskUsd).toBeCloseTo(50_050);
+    expect(metrics.depth3BpTotalUsd).toBeCloseTo(100_050);
+    expect(metrics.depth5BpBidUsd).toBeCloseTo(89_980);
+    expect(metrics.depth5BpAskUsd).toBeCloseTo(90_110);
+    expect(metrics.depth5BpTotalUsd).toBeCloseTo(180_090);
     expect(metrics.depth10BpBidUsd).toBeCloseTo(89980);
     expect(metrics.depth10BpAskUsd).toBeCloseTo(90110);
     expect(metrics.depth10BpTotalUsd).toBeCloseTo(180090);

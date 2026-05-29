@@ -69,6 +69,12 @@ export class BenchmarkDb {
         local_timestamp_ms integer not null,
         mid_price real,
         spread_bp real,
+        depth_3bp_bid_usd real,
+        depth_3bp_ask_usd real,
+        depth_3bp_total_usd real,
+        depth_5bp_bid_usd real,
+        depth_5bp_ask_usd real,
+        depth_5bp_total_usd real,
         depth_10bp_bid_usd real,
         depth_10bp_ask_usd real,
         depth_10bp_total_usd real,
@@ -102,6 +108,12 @@ export class BenchmarkDb {
         created_at_ms integer not null
       );
     `);
+    this.ensureExecutionMetricColumn("depth_3bp_bid_usd", "real");
+    this.ensureExecutionMetricColumn("depth_3bp_ask_usd", "real");
+    this.ensureExecutionMetricColumn("depth_3bp_total_usd", "real");
+    this.ensureExecutionMetricColumn("depth_5bp_bid_usd", "real");
+    this.ensureExecutionMetricColumn("depth_5bp_ask_usd", "real");
+    this.ensureExecutionMetricColumn("depth_5bp_total_usd", "real");
     this.ensureExecutionMetricColumn("buy_slippage_1m_bp", "real");
     this.ensureExecutionMetricColumn("sell_slippage_1m_bp", "real");
     this.ensureExecutionMetricColumn("avg_slippage_1m_bp", "real");
@@ -154,11 +166,13 @@ export class BenchmarkDb {
     this.db.prepare(`
       insert into execution_metrics (
         snapshot_id, venue, market, symbol, local_timestamp_ms, mid_price, spread_bp,
+        depth_3bp_bid_usd, depth_3bp_ask_usd, depth_3bp_total_usd,
+        depth_5bp_bid_usd, depth_5bp_ask_usd, depth_5bp_total_usd,
         depth_10bp_bid_usd, depth_10bp_ask_usd, depth_10bp_total_usd,
         buy_slippage_100k_bp, sell_slippage_100k_bp, avg_slippage_100k_bp,
         insufficient_depth_100k, buy_slippage_1m_bp, sell_slippage_1m_bp,
         avg_slippage_1m_bp, insufficient_depth_1m, valid, error
-      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       snapshotId,
       metrics.venue,
@@ -167,6 +181,12 @@ export class BenchmarkDb {
       metrics.localTimestampMs,
       metrics.midPrice,
       metrics.spreadBp,
+      metrics.depth3BpBidUsd,
+      metrics.depth3BpAskUsd,
+      metrics.depth3BpTotalUsd,
+      metrics.depth5BpBidUsd,
+      metrics.depth5BpAskUsd,
+      metrics.depth5BpTotalUsd,
       metrics.depth10BpBidUsd,
       metrics.depth10BpAskUsd,
       metrics.depth10BpTotalUsd,
@@ -185,10 +205,10 @@ export class BenchmarkDb {
 
   getLatestGrid(): unknown[] {
     return this.db.prepare(`
-      select venue, market, symbol, status, reason, null as spread_bp, null as depth_10bp_total_usd, null as avg_slippage_100k_bp, null as avg_slippage_1m_bp
+      select venue, market, symbol, status, reason, null as spread_bp, null as depth_3bp_total_usd, null as depth_5bp_total_usd, null as depth_10bp_total_usd, null as avg_slippage_100k_bp, null as avg_slippage_1m_bp
       from venue_market_status
       union all
-      select venue, market, symbol, 'listed' as status, null as reason, spread_bp, depth_10bp_total_usd, avg_slippage_100k_bp, avg_slippage_1m_bp
+      select venue, market, symbol, 'listed' as status, null as reason, spread_bp, depth_3bp_total_usd, depth_5bp_total_usd, depth_10bp_total_usd, avg_slippage_100k_bp, avg_slippage_1m_bp
       from execution_metrics
       where snapshot_id in (select max(snapshot_id) from execution_metrics group by venue, market)
     `).all();

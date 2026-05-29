@@ -36,6 +36,7 @@ describe("static export", () => {
     expect(index).toContain('fetchJson("daily-summary.json", suffix)');
     expect(index).toContain("id=\"daily-summary\"");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
+    expect(methodology).toContain("3bp, 5bp, and 10bp Depth");
     expect(methodology).toContain("100,000 USD");
     expect(methodology).toContain("1,000,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
@@ -57,11 +58,13 @@ describe("static export", () => {
     raw.prepare(`
       insert into execution_metrics (
         snapshot_id, venue, market, symbol, local_timestamp_ms, mid_price, spread_bp,
+        depth_3bp_bid_usd, depth_3bp_ask_usd, depth_3bp_total_usd,
+        depth_5bp_bid_usd, depth_5bp_ask_usd, depth_5bp_total_usd,
         depth_10bp_bid_usd, depth_10bp_ask_usd, depth_10bp_total_usd,
         buy_slippage_100k_bp, sell_slippage_100k_bp, avg_slippage_100k_bp,
         insufficient_depth_100k, buy_slippage_1m_bp, sell_slippage_1m_bp, avg_slippage_1m_bp,
         insufficient_depth_1m, valid, error
-      ) values (1, 'aevo', 'BTC', 'BTC-PERP', ?, 100, 1, 1000, 1000, 2000, 1, 1, 1, 0, 2, 2, 2, 0, 1, null)
+      ) values (1, 'aevo', 'BTC', 'BTC-PERP', ?, 100, 1, 300, 300, 600, 500, 500, 1000, 1000, 1000, 2000, 1, 1, 1, 0, 2, 2, 2, 0, 1, null)
     `).run(Date.now());
     exportStaticSite(db, join(tempDir, "public"));
 
@@ -86,6 +89,8 @@ describe("static export", () => {
     expect(index).toContain("Reference");
     expect(index).toContain("vs best");
     expect(index).toContain("depthRatio");
+    expect(index).toContain("\"3bp Depth\"");
+    expect(index).toContain("\"5bp Depth\"");
     expect(index).toContain("benchmarkRows");
     expect(index).toContain("Reference only");
     expect(index).toContain("N/A: not listed");
@@ -164,6 +169,12 @@ describe("static export", () => {
         localTimestampMs: baseMs + index * 60_000,
         midPrice: 100,
         spreadBp: spread,
+        depth3BpBidUsd: 300 + spread,
+        depth3BpAskUsd: 300 + spread,
+        depth3BpTotalUsd: 600 + spread,
+        depth5BpBidUsd: 500 + spread,
+        depth5BpAskUsd: 500 + spread,
+        depth5BpTotalUsd: 1000 + spread,
         depth10BpBidUsd: 1000 + spread,
         depth10BpAskUsd: 1000 + spread,
         depth10BpTotalUsd: 2000 + spread,
@@ -189,6 +200,9 @@ describe("static export", () => {
       market: "BTC",
       sample_count: 3,
       spread_bp: 2,
+      depth_3bp_total_usd: 602,
+      depth_5bp_total_usd: 1002,
+      depth_10bp_total_usd: 2002,
       avg_slippage_100k_bp: 2,
       avg_slippage_1m_bp: 12
     });

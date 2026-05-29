@@ -38,6 +38,12 @@ describe("BenchmarkDb", () => {
       localTimestampMs: 1,
       midPrice: 100,
       spreadBp: 1,
+      depth3BpBidUsd: 600,
+      depth3BpAskUsd: 500,
+      depth3BpTotalUsd: 1100,
+      depth5BpBidUsd: 800,
+      depth5BpAskUsd: 700,
+      depth5BpTotalUsd: 1500,
       depth10BpBidUsd: 1000,
       depth10BpAskUsd: 900,
       depth10BpTotalUsd: 1900,
@@ -54,6 +60,8 @@ describe("BenchmarkDb", () => {
     });
     const latest = db.getLatestGrid();
     expect(latest).toHaveLength(2);
+    expect(JSON.stringify(latest)).toContain("depth_3bp_total_usd");
+    expect(JSON.stringify(latest)).toContain("depth_5bp_total_usd");
     expect(JSON.stringify(latest)).toContain("avg_slippage_1m_bp");
     db.close();
   });

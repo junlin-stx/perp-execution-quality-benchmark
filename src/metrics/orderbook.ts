@@ -73,6 +73,10 @@ export function calculateExecutionMetrics(book: NormalizedOrderBook): ExecutionM
     ? null
     : (buy1m.slippageBp + sell1m.slippageBp) / 2;
 
+  const depth3BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 3);
+  const depth3BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 3);
+  const depth5BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 5);
+  const depth5BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 5);
   const depth10BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 10);
   const depth10BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 10);
 
@@ -83,6 +87,12 @@ export function calculateExecutionMetrics(book: NormalizedOrderBook): ExecutionM
     localTimestampMs: book.localTimestampMs,
     midPrice,
     spreadBp: ((bestAsk - bestBid) / midPrice) * 10_000,
+    depth3BpBidUsd,
+    depth3BpAskUsd,
+    depth3BpTotalUsd: depth3BpBidUsd + depth3BpAskUsd,
+    depth5BpBidUsd,
+    depth5BpAskUsd,
+    depth5BpTotalUsd: depth5BpBidUsd + depth5BpAskUsd,
     depth10BpBidUsd,
     depth10BpAskUsd,
     depth10BpTotalUsd: depth10BpBidUsd + depth10BpAskUsd,
@@ -107,6 +117,12 @@ function emptyMetrics(book: NormalizedOrderBook, error: string): ExecutionMetric
     localTimestampMs: book.localTimestampMs,
     midPrice: null,
     spreadBp: null,
+    depth3BpBidUsd: null,
+    depth3BpAskUsd: null,
+    depth3BpTotalUsd: null,
+    depth5BpBidUsd: null,
+    depth5BpAskUsd: null,
+    depth5BpTotalUsd: null,
     depth10BpBidUsd: null,
     depth10BpAskUsd: null,
     depth10BpTotalUsd: null,
