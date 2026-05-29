@@ -24,6 +24,8 @@
     .history-panel dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0; font-size: 13px; }
     .history-panel dt { color: #59636d; }
     .history-panel dd { margin: 0; font-weight: 650; }
+    .summary-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .summary-list li { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px 12px; line-height: 1.45; }
     a { color: #0d5c63; }
     @media (max-width: 820px) { .history-grid { grid-template-columns: 1fr; } main { padding: 18px; } }
   </style>
@@ -51,6 +53,11 @@
       </thead>
       <tbody id="grid"></tbody>
     </table>
+    <section aria-labelledby="summary-title">
+      <h2 id="summary-title">Daily Summary</h2>
+      <p class="muted" id="summary-note">Loading daily summaries...</p>
+      <ul class="summary-list" id="daily-summary"></ul>
+    </section>
     <section aria-labelledby="history-title">
       <h2 id="history-title">7 Day History</h2>
       <p class="muted" id="history-note">Loading 7 day history...</p>
@@ -65,9 +72,10 @@
 
     Promise.all([
       fetch("data/latest.json").then((response) => response.json()),
-      fetch("data/history-7d.json").then((response) => response.json())
+      fetch("data/history-7d.json").then((response) => response.json()),
+      fetch("data/daily-summary.json").then((response) => response.json())
     ])
-      .then(([latest, history]) => {
+      .then(([latest, history, summaries]) => {
         document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
         const rowMap = new Map();
         for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
@@ -85,8 +93,19 @@
             "<td>" + (notListed ? "N/A" : fmt(row?.avg_slippage_100k_bp, 3)) + "</td>" +
             "</tr>";
         })).join("");
+        renderSummaries(summaries);
         renderHistory(history);
       });
+
+    function renderSummaries(summaries) {
+      const rows = Array.isArray(summaries) ? summaries.slice(0, 6) : [];
+      document.getElementById("summary-note").textContent = rows.length
+        ? rows.length + " latest UTC daily summaries."
+        : "No daily summary has been generated yet.";
+      document.getElementById("daily-summary").innerHTML = rows.map((row) =>
+        "<li><strong>" + (row.utc_date ?? "unknown date") + " " + (row.market ?? "") + "</strong>: " + (row.summary ?? "") + "</li>"
+      ).join("");
+    }
 
     function renderHistory(history) {
       const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);

@@ -24,6 +24,9 @@ describe("static export", () => {
     expect(index).toContain("7 Day History");
     expect(index).toContain("data/history-7d.json");
     expect(index).toContain("id=\"history\"");
+    expect(index).toContain("Daily Summary");
+    expect(index).toContain("data/daily-summary.json");
+    expect(index).toContain("id=\"daily-summary\"");
     expect(readFileSync(join(tempDir, "public", "methodology.html"), "utf8")).toContain("100,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
