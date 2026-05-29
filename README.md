@@ -35,6 +35,19 @@ npm run collect -- --once
 npm run export
 ```
 
+## Run Collector and Static Export Loop
+
+```bash
+npm run run:benchmark
+```
+
+Defaults:
+
+- collect every 60 seconds
+- export static files every 300 seconds
+- write SQLite data to `data/benchmark.sqlite`
+- write static artifacts to `public/`
+
 ## Methodology
 
 See `public/methodology.html` after running the static export, and `docs/superpowers/specs/2026-05-29-perp-execution-quality-benchmark-design.md` for the design.

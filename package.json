@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "collect": "tsx src/cli.ts",
     "export": "tsx src/export/cli.ts",
+    "run:benchmark": "tsx src/runner/cli.ts",
     "summary": "tsx src/summary/cli.ts",
     "anomaly:dry-run": "tsx src/anomaly/cli.ts"
   },
