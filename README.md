@@ -47,7 +47,9 @@ npm run run:benchmark
 Defaults:
 
 - collect every 60 seconds
-- export static files every 300 seconds
+- export `latest.json` every 60 seconds
+- export 15 minute rollup history and static files every 300 seconds
+- collect with 4 concurrent venue requests
 - write SQLite data to `data/benchmark.sqlite`
 - write static artifacts to `public/`
 

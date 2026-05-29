@@ -36,13 +36,13 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: public URL serves `data/latest.json` with 12 targets.
 
 3. Run the collector/export loop.
-   - Status: complete for GitHub Actions Pages workflow.
-   - Command: `npm run run:benchmark`
-   - Evidence: `public/data/latest.json` updates every 5 minutes.
-   - Evidence: `public/data/history-7d.json` grows over time.
+   - Status: complete locally; GitHub Actions is publish/check fallback, not the primary realtime collector.
+   - Command: `npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4`
+   - Evidence: `public/data/latest.json` updates every collector round.
+   - Evidence: `public/data/history-7d.json` contains 15 minute rollup buckets over time.
    - Evidence: `data/benchmark.sqlite` is stored on persistent disk.
    - Evidence: workflow `Benchmark Pages` run `26623179905` completed successfully.
-   - Evidence: workflow file `.github/workflows/benchmark-pages.yml` uses a 5 minute cron and `actions/cache` for `data/benchmark.sqlite`.
+   - Evidence: workflow file `.github/workflows/benchmark-pages.yml` can publish `public/`, but GitHub schedule is not treated as the source of truth for realtime collection.
 
 4. Create the Telegram anomaly channel.
    - Evidence: `TELEGRAM_CHAT_ID` points to the public channel.
@@ -62,7 +62,7 @@ Before launch, verify the methodology page states:
 - Metric formulas for spread, 10bp depth, and 100,000 / 1,000,000 USD taker slippage.
 - Data sources for Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.
 - 30 to 60 second collection cadence.
-- 5 minute static export cadence.
+- Latest JSON refresh every collector round and 7 day history exported as 15 minute rollups every 5 minutes.
 - Hyperliquid 20-level public-book limitation.
 - StandX SOL is not replaced with another StandX market.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.

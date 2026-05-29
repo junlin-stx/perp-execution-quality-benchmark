@@ -8,9 +8,14 @@ function optionValue(name: string, fallback: string): string {
 const once = process.argv.includes("--once");
 const dbPath = optionValue("--db", "data/benchmark.sqlite");
 const intervalSeconds = Number(optionValue("--interval", "60"));
+const concurrency = Number(optionValue("--concurrency", "4"));
 
 if (!Number.isFinite(intervalSeconds) || intervalSeconds < 30) {
   throw new Error("--interval must be at least 30 seconds");
 }
 
-await runCollector({ dbPath, once, intervalSeconds });
+if (!Number.isFinite(concurrency) || concurrency <= 0) {
+  throw new Error("--concurrency must be a positive number");
+}
+
+await runCollector({ dbPath, once, intervalSeconds, concurrency });

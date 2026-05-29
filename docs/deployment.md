@@ -44,7 +44,9 @@ npm run run:benchmark
 Defaults:
 
 - Collect every 60 seconds.
-- Export static files every 300 seconds.
+- Export `latest.json` every 60 seconds.
+- Export 15 minute rollup history and static files every 300 seconds.
+- Collect with 4 concurrent venue requests.
 - Store SQLite data in `data/benchmark.sqlite`.
 - Write static files to `public/`.
 
@@ -52,6 +54,12 @@ Custom paths:
 
 ```bash
 npm run run:benchmark -- --db /var/lib/perp-bench/benchmark.sqlite --out /var/www/perp-bench
+```
+
+Realtime tuning:
+
+```bash
+npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4
 ```
 
 ## Static Serving

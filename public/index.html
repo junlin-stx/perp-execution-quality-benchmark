@@ -88,13 +88,24 @@
       fetch("data/daily-summary.json").then((response) => response.json())
     ])
       .then(([latest, history, summaries]) => {
-        document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
-        const rowMap = new Map();
-        for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
-        renderComparison(latest, rowMap);
+        renderLatest(latest);
         renderSummaries(summaries);
         renderHistory(history);
+        setInterval(refreshLatest, 60_000);
       });
+
+    function refreshLatest() {
+      fetch("data/latest.json?ts=" + Date.now())
+        .then((response) => response.json())
+        .then((latest) => renderLatest(latest));
+    }
+
+    function renderLatest(latest) {
+      document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
+      const rowMap = new Map();
+      for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
+      renderComparison(latest, rowMap);
+    }
 
     function renderComparison(latest, rowMap) {
       document.getElementById("comparison").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
@@ -181,7 +192,7 @@
     function renderHistory(history) {
       const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);
       document.getElementById("history-note").textContent = validRows.length
-        ? validRows.length + " valid metric samples in the exported 7 day window."
+        ? validRows.length + " valid 15 minute rollup buckets in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
       document.getElementById("history").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
         const rows = validRows.filter((row) => row.market === market);

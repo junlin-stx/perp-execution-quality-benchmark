@@ -4,25 +4,46 @@ import { collectionTargets, venues } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
 export function exportStaticSite(db: BenchmarkDb, outputDir = "public"): void {
+  exportLatestData(db, outputDir);
+  exportHistoryData(db, outputDir);
+  exportSummaryData(db, outputDir);
+  writeFileSync(join(outputDir, "index.html"), indexHtml(), "utf8");
+  writeFileSync(join(outputDir, "methodology.html"), methodologyHtml(), "utf8");
+}
+
+export function exportLatestData(db: BenchmarkDb, outputDir = "public"): void {
   const dataDir = join(outputDir, "data");
   mkdirSync(dataDir, { recursive: true });
   const activeVenues = new Set<string>(venues);
-
   const latest = {
     generatedAt: new Date().toISOString(),
     targets: collectionTargets,
     rows: filterActiveVenueRows(db.getLatestGrid(), activeVenues)
   };
-  const history = filterActiveVenueRows(db.getHistorySince(Date.now() - 7 * 24 * 60 * 60 * 1000), activeVenues);
+  writeJson(join(dataDir, "latest.json"), latest);
+}
+
+export function exportHistoryData(db: BenchmarkDb, outputDir = "public", options: { nowMs?: number; bucketMs?: number } = {}): void {
+  const dataDir = join(outputDir, "data");
+  mkdirSync(dataDir, { recursive: true });
+  const activeVenues = new Set<string>(venues);
+  const nowMs = options.nowMs ?? Date.now();
+  const bucketMs = options.bucketMs ?? 15 * 60 * 1000;
+  const history = rollupHistory(
+    filterActiveVenueRows(db.getHistorySince(nowMs - 7 * 24 * 60 * 60 * 1000), activeVenues),
+    bucketMs
+  );
+  writeJson(join(dataDir, "history-7d.json"), history);
+}
+
+export function exportSummaryData(db: BenchmarkDb, outputDir = "public"): void {
+  const dataDir = join(outputDir, "data");
+  mkdirSync(dataDir, { recursive: true });
+  const activeVenues = new Set<string>(venues);
   const summaries = filterRemovedVenueSummaries(db.getDailySummaries());
   const anomalies = filterActiveVenueRows(db.getRecentAnomalies(), activeVenues);
-
-  writeJson(join(dataDir, "latest.json"), latest);
-  writeJson(join(dataDir, "history-7d.json"), history);
   writeJson(join(dataDir, "daily-summary.json"), summaries);
   writeJson(join(dataDir, "anomalies.json"), anomalies);
-  writeFileSync(join(outputDir, "index.html"), indexHtml(), "utf8");
-  writeFileSync(join(outputDir, "methodology.html"), methodologyHtml(), "utf8");
 }
 
 function writeJson(path: string, data: unknown): void {
@@ -41,6 +62,53 @@ function filterRemovedVenueSummaries(rows: unknown[]): unknown[] {
     const summary = (row as { summary?: unknown }).summary;
     return typeof summary !== "string" || !summary.includes("Aevo");
   });
+}
+
+function rollupHistory(rows: unknown[], bucketMs: number): unknown[] {
+  const groups = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of rows) {
+    const item = row as Record<string, unknown>;
+    const timestamp = numericValue(item.local_timestamp_ms);
+    const venue = item.venue;
+    const market = item.market;
+    if (timestamp === null || typeof venue !== "string" || typeof market !== "string") continue;
+    const bucketStartMs = Math.floor(timestamp / bucketMs) * bucketMs;
+    const key = `${bucketStartMs}:${venue}:${market}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+
+  return [...groups.entries()].map(([key, group]) => {
+    const [bucketStartMs, venue, market] = key.split(":");
+    const first = group[0];
+    return {
+      bucket_start_ms: Number(bucketStartMs),
+      local_timestamp_ms: Number(bucketStartMs),
+      venue,
+      market,
+      symbol: first.symbol ?? null,
+      sample_count: group.length,
+      spread_bp: median(group.map((row) => numericValue(row.spread_bp))),
+      depth_10bp_total_usd: median(group.map((row) => numericValue(row.depth_10bp_total_usd))),
+      avg_slippage_100k_bp: median(group.map((row) => numericValue(row.avg_slippage_100k_bp))),
+      avg_slippage_1m_bp: median(group.map((row) => numericValue(row.avg_slippage_1m_bp))),
+      valid: group.some((row) => row.valid !== 0) ? 1 : 0
+    };
+  }).sort((a, b) => {
+    const left = a as { local_timestamp_ms: number; venue: string; market: string };
+    const right = b as { local_timestamp_ms: number; venue: string; market: string };
+    return left.local_timestamp_ms - right.local_timestamp_ms || left.market.localeCompare(right.market) || left.venue.localeCompare(right.venue);
+  });
+}
+
+function numericValue(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function median(values: Array<number | null>): number | null {
+  const nums = values.filter((value): value is number => typeof value === "number" && Number.isFinite(value)).sort((a, b) => a - b);
+  if (!nums.length) return null;
+  const mid = Math.floor(nums.length / 2);
+  return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
 }
 
 function indexHtml(): string {
@@ -134,13 +202,24 @@ function indexHtml(): string {
       fetch("data/daily-summary.json").then((response) => response.json())
     ])
       .then(([latest, history, summaries]) => {
-        document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
-        const rowMap = new Map();
-        for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
-        renderComparison(latest, rowMap);
+        renderLatest(latest);
         renderSummaries(summaries);
         renderHistory(history);
+        setInterval(refreshLatest, 60_000);
       });
+
+    function refreshLatest() {
+      fetch("data/latest.json?ts=" + Date.now())
+        .then((response) => response.json())
+        .then((latest) => renderLatest(latest));
+    }
+
+    function renderLatest(latest) {
+      document.getElementById("freshness").textContent = "Generated " + latest.generatedAt;
+      const rowMap = new Map();
+      for (const row of latest.rows) rowMap.set(row.venue + ":" + row.market, row);
+      renderComparison(latest, rowMap);
+    }
 
     function renderComparison(latest, rowMap) {
       document.getElementById("comparison").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
@@ -227,7 +306,7 @@ function indexHtml(): string {
     function renderHistory(history) {
       const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);
       document.getElementById("history-note").textContent = validRows.length
-        ? validRows.length + " valid metric samples in the exported 7 day window."
+        ? validRows.length + " valid 15 minute rollup buckets in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
       document.getElementById("history").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
         const rows = validRows.filter((row) => row.market === market);
@@ -288,7 +367,7 @@ function methodologyHtml(): string {
   </ul>
 
   <h2>Cadence</h2>
-  <p>The collector runs every 30 to 60 seconds. The default is 60 seconds. Static public artifacts are exported every 5 minutes.</p>
+  <p>The collector runs every 30 to 60 seconds. The default is 60 seconds. Latest public metrics can be refreshed every collector round, while 7 day history is exported as 15 minute rollups every 5 minutes.</p>
 
   <h2>Spread</h2>
   <p><code>mid = (best_bid + best_ask) / 2</code></p>

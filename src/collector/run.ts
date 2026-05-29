@@ -3,21 +3,21 @@ import { getAdapter } from "../exchanges/index.js";
 import { fetchStandxListedSymbols } from "../exchanges/standx.js";
 import { calculateExecutionMetrics } from "../metrics/orderbook.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
+import { mapWithConcurrency } from "./concurrency.js";
 
 export interface CollectorOptions {
   dbPath: string;
   once: boolean;
   intervalSeconds: number;
+  concurrency?: number;
 }
 
-export async function runCollectionRound(db: BenchmarkDb): Promise<{ collected: number; failed: number; notListed: number }> {
+export async function runCollectionRound(db: BenchmarkDb, options: { concurrency?: number } = {}): Promise<{ collected: number; failed: number; notListed: number }> {
   db.initialize();
   const standxSymbols = await fetchStandxListedSymbols().catch(() => new Set<string>());
-  let collected = 0;
-  let failed = 0;
-  let notListed = 0;
+  const concurrency = options.concurrency ?? 4;
 
-  for (const target of collectionTargets) {
+  const results = await mapWithConcurrency(collectionTargets, concurrency, async (target) => {
     if (target.status === "not_listed" || (target.venue === "standx" && !standxSymbols.has(target.symbol))) {
       db.upsertVenueMarketStatus({
         venue: target.venue,
@@ -40,8 +40,7 @@ export async function runCollectionRound(db: BenchmarkDb): Promise<{ collected: 
         status: "not_listed",
         error: "not_listed"
       });
-      notListed += 1;
-      continue;
+      return "not_listed";
     }
 
     try {
@@ -62,9 +61,8 @@ export async function runCollectionRound(db: BenchmarkDb): Promise<{ collected: 
         error: null
       });
       db.insertMetrics(snapshotId, calculateExecutionMetrics(book));
-      collected += 1;
+      return "collected";
     } catch (error) {
-      failed += 1;
       db.insertSnapshot({
         venue: target.venue,
         market: target.market,
@@ -79,10 +77,15 @@ export async function runCollectionRound(db: BenchmarkDb): Promise<{ collected: 
         status: "failed",
         error: error instanceof Error ? error.message : String(error)
       });
+      return "failed";
     }
-  }
+  });
 
-  return { collected, failed, notListed };
+  return {
+    collected: results.filter((result) => result === "collected").length,
+    failed: results.filter((result) => result === "failed").length,
+    notListed: results.filter((result) => result === "not_listed").length
+  };
 }
 
 export async function runCollector(options: CollectorOptions): Promise<void> {
@@ -90,7 +93,7 @@ export async function runCollector(options: CollectorOptions): Promise<void> {
   db.initialize();
   try {
     while (true) {
-      const result = await runCollectionRound(db);
+      const result = await runCollectionRound(db, { concurrency: options.concurrency });
       console.log(`collected=${result.collected} failed=${result.failed} not_listed=${result.notListed}`);
       if (options.once) break;
       await new Promise((resolve) => setTimeout(resolve, options.intervalSeconds * 1000));

@@ -2,7 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { exportStaticSite } from "../../src/export/static.js";
+import { exportStaticSite, exportLatestData, exportHistoryData } from "../../src/export/static.js";
 import { BenchmarkDb } from "../../src/storage/sqlite.js";
 
 let tempDir: string | undefined;
@@ -114,6 +114,90 @@ describe("static export", () => {
     expect(index).toContain("const visibleMarkets = [\"BTC\", \"ETH\"]");
     expect(index).toContain("markets.filter((market) => visibleMarkets.includes(market))");
     expect(latest).toContain("\"market\": \"SOL\"");
+    db.close();
+  });
+
+  it("exports 15 minute history rollups instead of raw metric rows", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    const baseMs = Date.parse("2026-05-29T08:00:00.000Z");
+    for (const [index, spread] of [3, 1, 2].entries()) {
+      const snapshotId = db.insertSnapshot({
+        venue: "hyperliquid",
+        market: "BTC",
+        symbol: "BTC",
+        source: "fixture",
+        localTimestampMs: baseMs + index * 60_000,
+        sourceTimestampMs: null,
+        latencyMs: 1,
+        bidCount: 1,
+        askCount: 1,
+        isPartial: false,
+        status: "ok",
+        error: null
+      });
+      db.insertMetrics(snapshotId, {
+        venue: "hyperliquid",
+        market: "BTC",
+        symbol: "BTC",
+        localTimestampMs: baseMs + index * 60_000,
+        midPrice: 100,
+        spreadBp: spread,
+        depth10BpBidUsd: 1000 + spread,
+        depth10BpAskUsd: 1000 + spread,
+        depth10BpTotalUsd: 2000 + spread,
+        buySlippage100kBp: spread,
+        sellSlippage100kBp: spread,
+        avgSlippage100kBp: spread,
+        insufficientDepth100k: false,
+        buySlippage1mBp: spread + 10,
+        sellSlippage1mBp: spread + 10,
+        avgSlippage1mBp: spread + 10,
+        insufficientDepth1m: false,
+        valid: true,
+        error: null
+      });
+    }
+
+    exportHistoryData(db, join(tempDir, "public"), { nowMs: baseMs + 10 * 60_000 });
+    const history = JSON.parse(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8"));
+
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      venue: "hyperliquid",
+      market: "BTC",
+      sample_count: 3,
+      spread_bp: 2,
+      avg_slippage_100k_bp: 2,
+      avg_slippage_1m_bp: 12
+    });
+    db.close();
+  });
+
+  it("lets latest data refresh without rewriting history data", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+    const beforeHistory = readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8");
+
+    exportLatestData(db, join(tempDir, "public"));
+
+    expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("generatedAt");
+    expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toBe(beforeHistory);
+    db.close();
+  });
+
+  it("refreshes latest comparison data on the public page", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain("setInterval(refreshLatest, 60_000)");
+    expect(index).toContain("function refreshLatest()");
     db.close();
   });
 });
