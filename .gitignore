@@ -6,3 +6,5 @@ data/debug-books/
 logs/
 public/data/*.json
 .DS_Store
+
+.env
