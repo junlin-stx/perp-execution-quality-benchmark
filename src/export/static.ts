@@ -84,7 +84,7 @@ function indexHtml(): string {
 <body>
   <header>
     <h1>Perp Execution Quality Benchmark</h1>
-    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Aevo, StandX, Aster, and edgeX.</p>
+    <p>Open benchmark for spread, 10bp depth, and estimated 100,000 USD taker slippage across Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter.</p>
   </header>
   <main>
     <div class="toolbar">
@@ -107,10 +107,10 @@ function indexHtml(): string {
     </section>
   </main>
   <script>
-    const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex"];
+    const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex", "grvt", "lighter"];
     const markets = ["BTC", "ETH", "SOL"];
     const visibleMarkets = ["BTC", "ETH"];
-    const labels = { hyperliquid: "Hyperliquid", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX" };
+    const labels = { hyperliquid: "Hyperliquid", aevo: "Aevo", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter" };
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
 
     Promise.all([
@@ -254,7 +254,7 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Aevo, StandX, Aster, and edgeX on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter on BTC, ETH, and SOL. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
@@ -263,6 +263,8 @@ function methodologyHtml(): string {
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
+    <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>
+    <li>Lighter: <code>GET https://mainnet.zklighter.elliot.ai/api/v1/orderBookOrders</code> for public order-level snapshots. This benchmark requests up to 250 orders per side and aggregates them into price levels before computing metrics.</li>
   </ul>
 
   <h2>Cadence</h2>
@@ -288,7 +290,7 @@ function methodologyHtml(): string {
     <li>Hidden, private, or venue-internal liquidity is not measured.</li>
     <li>Hyperliquid public books are limited to 20 levels per side.</li>
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
-    <li>Aster and edgeX are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
+    <li>Aster, edgeX, GRVT, and Lighter are included as emerging venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
 </main>
 </body>

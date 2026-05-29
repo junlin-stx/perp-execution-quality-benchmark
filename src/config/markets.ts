@@ -1,4 +1,4 @@
-export const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex"] as const;
+export const venues = ["hyperliquid", "aevo", "standx", "aster", "edgex", "grvt", "lighter"] as const;
 export const markets = ["BTC", "ETH", "SOL"] as const;
 
 export type Venue = (typeof venues)[number];
@@ -28,5 +28,11 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "aster", market: "SOL", symbol: "SOLUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "edgex", market: "BTC", symbol: "10000001", status: "listed", source: "edgex_depth" },
   { venue: "edgex", market: "ETH", symbol: "10000002", status: "listed", source: "edgex_depth" },
-  { venue: "edgex", market: "SOL", symbol: "10000003", status: "listed", source: "edgex_depth" }
+  { venue: "edgex", market: "SOL", symbol: "10000003", status: "listed", source: "edgex_depth" },
+  { venue: "grvt", market: "BTC", symbol: "BTC_USDT_Perp", status: "listed", source: "grvt_full_book" },
+  { venue: "grvt", market: "ETH", symbol: "ETH_USDT_Perp", status: "listed", source: "grvt_full_book" },
+  { venue: "grvt", market: "SOL", symbol: "SOL_USDT_Perp", status: "listed", source: "grvt_full_book" },
+  { venue: "lighter", market: "BTC", symbol: "BTC", status: "listed", source: "lighter_order_book_orders" },
+  { venue: "lighter", market: "ETH", symbol: "ETH", status: "listed", source: "lighter_order_book_orders" },
+  { venue: "lighter", market: "SOL", symbol: "SOL", status: "listed", source: "lighter_order_book_orders" }
 ];

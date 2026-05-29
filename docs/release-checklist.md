@@ -60,7 +60,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
 Before launch, verify the methodology page states:
 
 - Metric formulas for spread, 10bp depth, and 100,000 USD taker slippage.
-- Data sources for Hyperliquid, Aevo, StandX, Aster, and edgeX.
+- Data sources for Hyperliquid, Aevo, StandX, Aster, edgeX, GRVT, and Lighter.
 - 30 to 60 second collection cadence.
 - 5 minute static export cadence.
 - Hyperliquid 20-level public-book limitation.

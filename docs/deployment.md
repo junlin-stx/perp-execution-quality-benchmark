@@ -27,7 +27,7 @@ npm run run:benchmark -- --once
 The one-shot command should print:
 
 ```text
-collected=11 failed=0 not_listed=1
+collected=20 failed=0 not_listed=1
 exported static benchmark to public
 ```
 
@@ -117,4 +117,3 @@ Verify methodology boundaries:
 ## Why Not Pure Scheduled Static CI
 
 A scheduled CI job can publish `public/`, but it usually starts from a clean checkout. Without a persistent `data/benchmark.sqlite`, the 7 day history and daily summaries are not trustworthy. Use CI only if it restores and saves the SQLite database or writes to another durable store.
-
