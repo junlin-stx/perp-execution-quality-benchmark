@@ -86,7 +86,7 @@ export function calculateExecutionMetrics(book: NormalizedOrderBook): ExecutionM
     symbol: book.symbol,
     localTimestampMs: book.localTimestampMs,
     midPrice,
-    spreadBp: ((bestAsk - bestBid) / midPrice) * 10_000,
+    spreadBp: book.spreadOverrideBp ?? ((bestAsk - bestBid) / midPrice) * 10_000,
     depth3BpBidUsd,
     depth3BpAskUsd,
     depth3BpTotalUsd: depth3BpBidUsd + depth3BpAskUsd,

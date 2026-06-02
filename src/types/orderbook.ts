@@ -16,6 +16,7 @@ export interface NormalizedOrderBook {
   bids: BookLevel[];
   asks: BookLevel[];
   isPartial: boolean;
+  spreadOverrideBp?: number;
 }
 
 export interface SideSlippage {

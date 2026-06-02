@@ -20,7 +20,7 @@
   <h2>Data Sources</h2>
   <ul>
     <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
-    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code>; bids and asks are sorted client-side. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in the public symbol list.</li>
+    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in public symbol data.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
     <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>

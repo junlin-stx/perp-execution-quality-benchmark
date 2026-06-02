@@ -21,6 +21,20 @@ describe("adapter normalization", () => {
     expect(book.asks.map((level) => level.price)).toEqual([101, 102]);
   });
 
+  it("uses StandX symbol market quote as a spread override", () => {
+    const book = normalizeStandxBook(
+      "BTC",
+      "BTC-USD",
+      { time: 2, bids: [["99", "1"], ["100", "1"]], asks: [["102", "1"], ["101", "1"]] },
+      1,
+      5,
+      { bid1: "100", ask1: "100.5" }
+    );
+    expect(book.spreadOverrideBp).toBeCloseTo(49.875);
+    expect(book.bids.map((level) => level.price)).toEqual([100, 99]);
+    expect(book.asks.map((level) => level.price)).toEqual([101, 102]);
+  });
+
   it("normalizes Aster array levels", () => {
     const book = normalizeAsterBook("BTC", "BTCUSDT", { E: 2, bids: [["100", "2"]], asks: [["101", "3"]] }, 1, 5);
     expect(book.venue).toBe("aster");

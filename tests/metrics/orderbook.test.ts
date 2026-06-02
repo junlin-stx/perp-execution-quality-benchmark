@@ -40,6 +40,13 @@ describe("orderbook metrics", () => {
     expect(metrics.depth10BpTotalUsd).toBeCloseTo(180090);
   });
 
+  it("uses a quote spread override without changing depth or mid price", () => {
+    const metrics = calculateExecutionMetrics({ ...book, spreadOverrideBp: 1.23 });
+    expect(metrics.midPrice).toBeCloseTo(100.05);
+    expect(metrics.spreadBp).toBeCloseTo(1.23);
+    expect(metrics.depth10BpTotalUsd).toBeCloseTo(180090);
+  });
+
   it("simulates 100k buy and sell taker slippage", () => {
     const buy = estimateTakerSlippage(book.asks, "buy", 100_000, 100.05);
     const sell = estimateTakerSlippage(book.bids, "sell", 100_000, 100.05);
