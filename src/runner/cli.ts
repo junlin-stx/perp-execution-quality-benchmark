@@ -31,9 +31,8 @@ db.initialize();
 
 try {
   while (true) {
-    const result = await runCollectionRound(db, { concurrency });
+    await runCollectionRound(db, { concurrency, logger: console.log });
     const nowMs = Date.now();
-    console.log(`collected=${result.collected} failed=${result.failed} not_listed=${result.notListed}`);
 
     const shouldExportHistory = shouldRunScheduledTask({
       lastRunMs: lastHistoryExportMs,
