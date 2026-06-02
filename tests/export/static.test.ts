@@ -37,6 +37,8 @@ describe("static export", () => {
     expect(index).toContain("id=\"daily-summary\"");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
     expect(methodology).toContain("3bp, 5bp, and 10bp Depth");
+    expect(methodology).toContain("depth_total_usd = depth_bid_usd + depth_ask_usd");
+    expect(methodology).toContain("JSON and SQLite keep bid, ask, and total fields");
     expect(methodology).toContain("100,000 USD");
     expect(methodology).toContain("1,000,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");

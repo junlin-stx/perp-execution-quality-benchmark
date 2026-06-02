@@ -39,7 +39,7 @@
   <h2>3bp, 5bp, and 10bp Depth</h2>
   <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - bp / 10000)</code>.</p>
   <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + bp / 10000)</code>.</p>
-  <p>The public table shows total 3bp, 5bp, and 10bp depth while JSON keeps side breakdowns for collector metrics.</p>
+  <p>The public table shows two-sided total depth: <code>depth_total_usd = depth_bid_usd + depth_ask_usd</code>. JSON and SQLite keep bid, ask, and total fields for each depth band.</p>
 
   <h2>100,000 and 1,000,000 USD Estimated Taker Slippage</h2>
   <p>A buy order consumes asks from best ask upward until the target notional is filled. A sell order consumes bids from best bid downward. The public table shows both 100,000 USD and 1,000,000 USD average taker slippage.</p>
