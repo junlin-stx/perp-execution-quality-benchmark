@@ -37,6 +37,7 @@ describe("static export", () => {
     expect(index).toContain("id=\"daily-summary\"");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
     expect(methodology).toContain("3bp, 5bp, and 10bp Depth");
+    expect(methodology).toContain("Spread is a top-of-book signal and can be affected by venue tick size or public-book aggregation");
     expect(methodology).toContain("depth_total_usd = depth_bid_usd + depth_ask_usd");
     expect(methodology).toContain("JSON and SQLite keep bid, ask, and total fields");
     expect(methodology).toContain("100,000 USD");
@@ -93,6 +94,10 @@ describe("static export", () => {
     expect(index).toContain("depthRatio");
     expect(index).toContain("\"3bp Depth\"");
     expect(index).toContain("\"5bp Depth\"");
+    expect(index).toContain("<th>Venue</th><th>Status</th><th>10bp Depth</th><th>5bp Depth</th><th>3bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th>");
+    expect(index.indexOf('metricCell(item, "depth_10bp_total_usd"')).toBeLessThan(index.indexOf("spreadCell(item)"));
+    expect(index).toContain("Tick-size sensitive");
+    expect(index).not.toContain('metricCell(item, "spread_bp"');
     expect(index).toContain("benchmarkRows");
     expect(index).toContain("Reference only");
     expect(index).toContain("N/A: not listed");

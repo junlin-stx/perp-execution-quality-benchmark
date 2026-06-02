@@ -275,8 +275,6 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         const benchmarkRows = sortRowsByDepth(rows.filter((item) => !item.reference));
         const referenceRows = sortRowsByDepth(rows.filter((item) => item.reference));
         const sortedRows = benchmarkRows.concat(referenceRows);
-        const spreadBest = metricBest(benchmarkRows, "spread_bp", "low");
-        const spreadWorst = metricBest(benchmarkRows, "spread_bp", "high");
         const depth3Best = metricBest(benchmarkRows, "depth_3bp_total_usd", "high");
         const depth3Worst = metricBest(benchmarkRows, "depth_3bp_total_usd", "low");
         const depth5Best = metricBest(benchmarkRows, "depth_5bp_total_usd", "high");
@@ -291,19 +289,19 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         return "<article class='market-panel'>" +
           "<h2>" + market + "<span>" + validCount + "/" + benchmarkVenues.length + " benchmark live</span></h2>" +
           "<table><thead><tr>" +
-            "<th>Venue</th><th>Status</th><th>Spread</th><th>3bp Depth</th><th>5bp Depth</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th>" +
+            "<th>Venue</th><th>Status</th><th>10bp Depth</th><th>5bp Depth</th><th>3bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th>" +
           "</tr></thead><tbody>" +
           sortedRows.map((item) => {
             const rowClass = item.notListed ? " class='na-row'" : (item.reference ? " class='reference-row'" : "");
             return "<tr" + rowClass + ">" +
               "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
               "<td class='status' data-label='Status'>" + item.status + "</td>" +
-              metricCell(item, "spread_bp", "Spread", "bp", spreadBest, spreadWorst, spreadDelta) +
-              metricCell(item, "depth_3bp_total_usd", "3bp Depth", "usd", depth3Best, depth3Worst, depthRatio) +
-              metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depth5Worst, depthRatio) +
               metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthWorst, depthRatio) +
+              metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depth5Worst, depthRatio) +
+              metricCell(item, "depth_3bp_total_usd", "3bp Depth", "usd", depth3Best, depth3Worst, depthRatio) +
               metricCell(item, "avg_slippage_100k_bp", "100k Slippage", "bp", slipBest, slipWorst, spreadDelta) +
               metricCell(item, "avg_slippage_1m_bp", "1M Slippage", "bp", slip1mBest, slip1mWorst, spreadDelta) +
+              spreadCell(item) +
             "</tr>";
           }).join("") +
           "</tbody></table>" +
@@ -322,6 +320,14 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       const note = item.reference ? "Reference only" : (isBest ? "best in market" : deltaFn(value, best));
       const attrs = (className ? " class='" + className + "'" : "") + " data-label='" + label + "'";
       return "<td" + attrs + "><span class='metric-value'>" + display + badge + "</span><span class='metric-note'>" + note + "</span></td>";
+    }
+
+    function spreadCell(item) {
+      const value = metricValue(item, "spread_bp");
+      if (value === null) return "<td data-label='Spread'><span class='metric-value'>N/A</span><span class='metric-note'>No comparable sample</span></td>";
+      const badge = item.reference ? "<span class='reference-badge'>Reference</span>" : "";
+      const note = item.reference ? "Reference only" : "Tick-size sensitive";
+      return "<td data-label='Spread'><span class='metric-value'>" + fmt(value, 3) + " bp" + badge + "</span><span class='metric-note'>" + note + "</span></td>";
     }
 
     function metricValue(item, key) {
@@ -434,6 +440,7 @@ function methodologyHtml(): string {
   <h2>Spread</h2>
   <p><code>mid = (best_bid + best_ask) / 2</code></p>
   <p><code>spread_bp = ((best_ask - best_bid) / mid) * 10000</code></p>
+  <p>Spread is a top-of-book signal and can be affected by venue tick size or public-book aggregation. Depth and estimated taker slippage are the primary comparability metrics.</p>
 
   <h2>3bp, 5bp, and 10bp Depth</h2>
   <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - bp / 10000)</code>.</p>

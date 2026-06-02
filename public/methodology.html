@@ -35,6 +35,7 @@
   <h2>Spread</h2>
   <p><code>mid = (best_bid + best_ask) / 2</code></p>
   <p><code>spread_bp = ((best_ask - best_bid) / mid) * 10000</code></p>
+  <p>Spread is a top-of-book signal and can be affected by venue tick size or public-book aggregation. Depth and estimated taker slippage are the primary comparability metrics.</p>
 
   <h2>3bp, 5bp, and 10bp Depth</h2>
   <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - bp / 10000)</code>.</p>
