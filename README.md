@@ -53,6 +53,24 @@ Defaults:
 - write SQLite data to `data/benchmark.sqlite`
 - write static artifacts to `public/`
 
+## Run With PM2
+
+Install PM2 on the always-on host, configure the R2 environment variables, then start the realtime collector and R2 publisher:
+
+```bash
+npm run pm2:start
+npm run pm2:save
+```
+
+Management commands:
+
+```bash
+npm run pm2:status
+npm run pm2:logs
+npm run pm2:restart
+npm run pm2:stop
+```
+
 ## Publish Data to Cloudflare R2
 
 Configure an R2 bucket with S3 API credentials:

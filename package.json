@@ -12,7 +12,14 @@
     "summary": "tsx src/summary/cli.ts",
     "anomaly:dry-run": "tsx src/anomaly/cli.ts",
     "telegram:send-anomalies": "tsx src/telegram/send-anomalies.ts",
-    "publish:r2": "tsx src/publish/r2-cli.ts"
+    "publish:r2": "tsx src/publish/r2-cli.ts",
+    "pm2:start": "pm2 start ecosystem.config.cjs --env production",
+    "pm2:restart": "pm2 restart ecosystem.config.cjs --env production",
+    "pm2:stop": "pm2 stop perp-bench",
+    "pm2:delete": "pm2 delete perp-bench",
+    "pm2:status": "pm2 status perp-bench",
+    "pm2:logs": "pm2 logs perp-bench",
+    "pm2:save": "pm2 save"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

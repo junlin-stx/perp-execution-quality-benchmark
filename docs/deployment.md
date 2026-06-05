@@ -62,6 +62,31 @@ Realtime tuning:
 npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4
 ```
 
+## PM2 Process Manager
+
+`ecosystem.config.cjs` runs the recommended realtime collector and R2 publisher:
+
+```bash
+npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4 --publish-r2
+```
+
+Install PM2 on the host, export the R2 environment variables, then start and persist the process list:
+
+```bash
+npm run pm2:start
+npm run pm2:save
+```
+
+Common lifecycle commands:
+
+```bash
+npm run pm2:status
+npm run pm2:logs
+npm run pm2:restart
+npm run pm2:stop
+npm run pm2:delete
+```
+
 ## Cloudflare R2 Data Publishing
 
 Use R2 as the public data layer while keeping SQLite as the local source of truth. Create an R2 bucket, enable public access through a custom domain or the development `r2.dev` URL, and create an R2 S3 API token with Object Read & Write permission for the bucket.
