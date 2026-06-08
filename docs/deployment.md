@@ -164,6 +164,7 @@ After changing CORS on a custom R2 domain, purge that hostname from Cloudflare C
 Published object keys:
 
 - `data/latest.json` with `Cache-Control: public, max-age=30, must-revalidate`
+- `data/health.json` with `Cache-Control: public, max-age=30, must-revalidate`
 - `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json` with `Cache-Control: public, max-age=300, must-revalidate`
 
 ## Static Serving
@@ -173,6 +174,7 @@ Serve the output directory as a static site. The public URL must serve:
 - `/index.html`
 - `/methodology.html`
 - `/data/latest.json`
+- `/data/health.json`
 - `/data/history-7d.json`
 - `/data/daily-summary.json`
 - `/data/anomalies.json`
@@ -212,13 +214,14 @@ Use these checks after deployment:
 
 ```bash
 curl -fsS https://<public-site>/data/latest.json
+curl -fsS https://<public-site>/data/health.json
 curl -fsS https://<public-site>/methodology.html
 ```
 
 Verify local data freshness:
 
 ```bash
-node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('public/data/latest.json','utf8')); console.log(j.generatedAt, j.rows.length)"
+node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('public/data/health.json','utf8')); console.log(j.generatedAt, j.latestSampleAgeSeconds, j.validSampleCount, j.failedCount)"
 ```
 
 Verify methodology boundaries:

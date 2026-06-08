@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe("static export", () => {
-  it("writes index, methodology, latest, history, summary, and anomalies files", () => {
+  it("writes index, methodology, latest, health, history, summary, and anomalies files", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
@@ -29,12 +29,21 @@ describe("static export", () => {
     expect(index).toContain("Aster");
     expect(index).toContain("edgeX");
     expect(index).toContain("validCount + \"/\" + benchmarkVenues.length + \" benchmark live</span>");
-    expect(index).toContain("7 Day History");
+    expect(index).toContain("Venue / Market Drilldown");
     expect(index).toContain('fetchJson("history-7d.json", suffix)');
     expect(index).toContain("id=\"history\"");
     expect(index).toContain("Daily Summary");
     expect(index).toContain('fetchJson("daily-summary.json", suffix)');
     expect(index).toContain("id=\"daily-summary\"");
+    expect(index).toContain("Data Health");
+    expect(index).toContain('fetchJson("health.json", suffix)');
+    expect(index).toContain("function renderHealth(health)");
+    expect(index).toContain("latest sample age");
+    expect(index).toContain("per venue/market status");
+    expect(index).toContain("Public Anomaly Feed");
+    expect(index).toContain('fetchJson("anomalies.json", suffix)');
+    expect(index).toContain("function renderAnomalies(anomalies)");
+    expect(index).toContain("dedupe_key");
     const methodology = readFileSync(join(tempDir, "public", "methodology.html"), "utf8");
     expect(methodology).toContain("3bp, 5bp, and 10bp Depth");
     expect(methodology).toContain("Spread is a top-of-book signal and can be affected by venue tick size or public-book aggregation");
@@ -43,7 +52,105 @@ describe("static export", () => {
     expect(methodology).toContain("100,000 USD");
     expect(methodology).toContain("1,000,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
+    expect(readFileSync(join(tempDir, "public", "data", "health.json"), "utf8")).toContain("expectedTargetCount");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
+    db.close();
+  });
+
+  it("exports public data health from latest target and snapshot states", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    const nowMs = Date.parse("2026-06-08T08:00:00.000Z");
+    const okSnapshot = db.insertSnapshot({
+      venue: "standx",
+      market: "BTC",
+      symbol: "BTC-USD",
+      source: "fixture",
+      localTimestampMs: nowMs - 30_000,
+      sourceTimestampMs: null,
+      latencyMs: 1,
+      bidCount: 1,
+      askCount: 1,
+      isPartial: false,
+      status: "ok",
+      error: null
+    });
+    db.insertMetrics(okSnapshot, {
+      venue: "standx",
+      market: "BTC",
+      symbol: "BTC-USD",
+      localTimestampMs: nowMs - 30_000,
+      midPrice: 100,
+      spreadBp: 1,
+      depth3BpBidUsd: 300,
+      depth3BpAskUsd: 300,
+      depth3BpTotalUsd: 600,
+      depth5BpBidUsd: 500,
+      depth5BpAskUsd: 500,
+      depth5BpTotalUsd: 1000,
+      depth10BpBidUsd: 1000,
+      depth10BpAskUsd: 1000,
+      depth10BpTotalUsd: 2000,
+      buySlippage100kBp: 2,
+      sellSlippage100kBp: 2,
+      avgSlippage100kBp: 2,
+      insufficientDepth100k: false,
+      buySlippage1mBp: null,
+      sellSlippage1mBp: null,
+      avgSlippage1mBp: null,
+      insufficientDepth1m: true,
+      valid: true,
+      error: null
+    });
+    db.insertSnapshot({
+      venue: "standx",
+      market: "SOL",
+      symbol: "SOL-USD",
+      source: "fixture",
+      localTimestampMs: nowMs - 20_000,
+      sourceTimestampMs: null,
+      latencyMs: 0,
+      bidCount: 0,
+      askCount: 0,
+      isPartial: false,
+      status: "not_listed",
+      error: "not_listed"
+    });
+    db.insertSnapshot({
+      venue: "grvt",
+      market: "BTC",
+      symbol: "BTC-USDT",
+      source: "fixture",
+      localTimestampMs: nowMs - 10_000,
+      sourceTimestampMs: null,
+      latencyMs: 0,
+      bidCount: 0,
+      askCount: 0,
+      isPartial: false,
+      status: "failed",
+      error: "timeout"
+    });
+
+    exportStaticSite(db, join(tempDir, "public"), { nowMs });
+    const health = JSON.parse(readFileSync(join(tempDir, "public", "data", "health.json"), "utf8"));
+
+    expect(health).toMatchObject({
+      schemaVersion: 2,
+      expectedTargetCount: 24,
+      expectedListedCount: 23,
+      validSampleCount: 1,
+      failedCount: 1,
+      notListedCount: 1,
+      insufficientDepthCount: 1,
+      latestSampleTimestampMs: nowMs - 10_000,
+      latestSampleAgeSeconds: 10
+    });
+    expect(health.statuses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ venue: "standx", market: "BTC", status: "insufficient_depth", latest_sample_age_seconds: 30 }),
+      expect.objectContaining({ venue: "standx", market: "SOL", status: "not_listed", latest_sample_age_seconds: 20 }),
+      expect.objectContaining({ venue: "grvt", market: "BTC", status: "failed", reason: "timeout", latest_sample_age_seconds: 10 })
+    ]));
     db.close();
   });
 
@@ -136,7 +243,7 @@ describe("static export", () => {
     db.close();
   });
 
-  it("temporarily hides SOL from the public page while keeping SOL data exported", () => {
+  it("shows SOL on the public page so not-listed states are visible", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
@@ -144,7 +251,7 @@ describe("static export", () => {
 
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     const latest = readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8");
-    expect(index).toContain("const visibleMarkets = [\"BTC\", \"ETH\"]");
+    expect(index).toContain("const visibleMarkets = [\"BTC\", \"ETH\", \"SOL\"]");
     expect(index).toContain("markets.filter((market) => visibleMarkets.includes(market))");
     expect(latest).toContain("\"market\": \"SOL\"");
     db.close();
@@ -244,12 +351,32 @@ describe("static export", () => {
     expect(index).toContain("if (refreshInFlight) return");
     expect(index).toContain("const ts = Date.now()");
     expect(index).toContain("loadData(ts)");
-    expect(index).toContain("renderData(latest, history, summaries)");
+    expect(index).toContain("renderData(latest, history, summaries, health, anomalies)");
     expect(index).toContain("refreshInFlight = false");
     expect(index).toContain('fetchJson("latest.json", suffix)');
     expect(index).toContain('fetchJson("history-7d.json", suffix)');
     expect(index).toContain('fetchJson("daily-summary.json", suffix)');
+    expect(index).toContain('fetchJson("health.json", suffix)');
+    expect(index).toContain('fetchJson("anomalies.json", suffix)');
     expect(index).toContain("if (!response.ok) throw new Error");
+    db.close();
+  });
+
+  it("renders venue and market drilldown from 7 day history", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    exportStaticSite(db, join(tempDir, "public"));
+
+    const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
+    expect(index).toContain("Venue / Market Drilldown");
+    expect(index).toContain("function renderDrilldown(history, health)");
+    expect(index).toContain("selectedPair");
+    expect(index).toContain("drilldown-select");
+    expect(index).toContain("missing samples");
+    expect(index).toContain("insufficient-depth samples");
+    expect(index).toContain("Median 10bp depth");
+    expect(index).toContain("Median 100k slippage");
     db.close();
   });
 

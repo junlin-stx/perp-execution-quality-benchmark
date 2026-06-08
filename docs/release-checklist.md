@@ -14,6 +14,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
   - `public/index.html`
   - `public/methodology.html`
   - `public/data/latest.json`
+  - `public/data/health.json`
   - `public/data/history-7d.json`
   - `public/data/daily-summary.json`
   - `public/data/anomalies.json`
@@ -33,7 +34,8 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: public URL is `https://junlin-stx.github.io/perp-execution-quality-benchmark/`.
    - Evidence: public URL serves `index.html` with `Perp Execution Quality` and `7 Day History`.
    - Evidence: public URL serves `methodology.html` with the metric formulas and comparability limits.
-   - Evidence: public URL serves `data/latest.json` with 12 targets.
+   - Evidence: public URL serves `data/latest.json` with 24 targets.
+   - Evidence: public URL serves `data/health.json` with latest sample age, expected/valid/failed/not-listed/insufficient-depth/unavailable counts, and per venue/market status.
 
 3. Run the collector/export loop.
    - Status: complete locally; GitHub Actions is publish/check fallback, not the primary realtime collector.
@@ -55,6 +57,14 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: `public/data/daily-summary.json` contains the generated summary.
    - Evidence: the summary text is posted publicly.
 
+6. Publish Trust & Distribution evidence.
+   - Evidence: homepage shows Data Health.
+   - Evidence: homepage shows Venue / Market Drilldown for a selected venue and market.
+   - Evidence: homepage shows Public Anomaly Feed, even when the current state is no public anomaly events.
+   - Evidence: daily summary text starts with the market conclusion, states reference-only venues, and does not include trading advice.
+   - Evidence: `docs/public-data.md` documents JSON files, field semantics, freshness semantics, ranking/reference semantics, and CSV/API availability.
+   - Evidence: `CHANGELOG.md` includes the release entry.
+
 ## Public Methodology Checks
 
 Before launch, verify the methodology page states:
@@ -63,6 +73,8 @@ Before launch, verify the methodology page states:
 - Data sources for Hyperliquid, StandX, Aster, edgeX, GRVT, Lighter, Extended, and Nado.
 - 30 to 60 second collection cadence.
 - Latest JSON refresh every collector round and 7 day history exported as 15 minute rollups every 5 minutes.
+- `health.json` explains latest sample age and per venue/market recent status.
+- `anomalies.json` is a public anomaly feed with metric, venue, market, time window, baseline, observed value, message, and dedupe key when available.
 - Hyperliquid 20-level public-book limitation.
 - StandX SOL is not replaced with another StandX market.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.

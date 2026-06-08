@@ -5,10 +5,12 @@ import { BenchmarkDb } from "../storage/sqlite.js";
 
 export interface StaticSiteOptions {
   dataBaseUrl?: string;
+  nowMs?: number;
 }
 
 export function exportStaticSite(db: BenchmarkDb, outputDir = "public", options: StaticSiteOptions = {}): void {
   exportLatestData(db, outputDir);
+  exportHealthData(db, outputDir, { nowMs: options.nowMs });
   exportHistoryData(db, outputDir);
   exportSummaryData(db, outputDir);
   writeFileSync(join(outputDir, "index.html"), indexHtml(options), "utf8");
@@ -25,6 +27,47 @@ export function exportLatestData(db: BenchmarkDb, outputDir = "public"): void {
     rows: filterActiveVenueRows(db.getLatestGrid(), activeVenues)
   };
   writeJson(join(dataDir, "latest.json"), latest);
+}
+
+export function exportHealthData(db: BenchmarkDb, outputDir = "public", options: { nowMs?: number } = {}): void {
+  const dataDir = join(outputDir, "data");
+  mkdirSync(dataDir, { recursive: true });
+  const nowMs = options.nowMs ?? Date.now();
+  const activeVenues = new Set<string>(venues);
+  const latestRows = db.getLatestSnapshotStatuses().filter((row) => activeVenues.has(row.venue));
+  const latestMap = new Map(latestRows.map((row) => [`${row.venue}:${row.market}`, row]));
+  const statuses = collectionTargets.map((target) => {
+    const row = latestMap.get(`${target.venue}:${target.market}`);
+    const status = target.status === "not_listed" ? "not_listed" : (row?.status ?? "unavailable");
+    const insufficient = row ? row.insufficient_depth_100k === 1 || row.insufficient_depth_1m === 1 || row.valid === 0 : false;
+    return {
+      venue: target.venue,
+      market: target.market,
+      symbol: row?.symbol ?? target.symbol,
+      status: insufficient && status === "ok" ? "insufficient_depth" : status,
+      reason: target.status === "not_listed" ? "configured not listed" : (row?.reason ?? (row ? null : "no recent sample")),
+      local_timestamp_ms: row?.local_timestamp_ms ?? null,
+      latest_sample_age_seconds: row ? Math.max(0, Math.floor((nowMs - row.local_timestamp_ms) / 1000)) : null
+    };
+  });
+  const latestSampleTimestampMs = latestRows.length ? Math.max(...latestRows.map((row) => row.local_timestamp_ms)) : null;
+  const health = {
+    schemaVersion: 2,
+    generatedAt: new Date(nowMs).toISOString(),
+    latestSampleTimestampMs,
+    latestSampleAgeSeconds: latestSampleTimestampMs === null ? null : Math.max(0, Math.floor((nowMs - latestSampleTimestampMs) / 1000)),
+    expectedTargetCount: collectionTargets.length,
+    expectedListedCount: collectionTargets.filter((target) => target.status === "listed").length,
+    validSampleCount: latestRows.filter((row) => row.valid === 1).length,
+    failedCount: statuses.filter((row) => row.status === "failed").length,
+    notListedCount: statuses.filter((row) => row.status === "not_listed").length,
+    insufficientDepthCount: statuses.filter((row) => row.status === "insufficient_depth").length,
+    unavailableCount: statuses.filter((row) => row.status === "unavailable").length,
+    referenceVenues,
+    benchmarkVenues,
+    statuses
+  };
+  writeJson(join(dataDir, "health.json"), health);
 }
 
 export function exportHistoryData(db: BenchmarkDb, outputDir = "public", options: { nowMs?: number; bucketMs?: number } = {}): void {
@@ -97,6 +140,9 @@ function rollupHistory(rows: unknown[], bucketMs: number): unknown[] {
       depth_10bp_total_usd: median(group.map((row) => numericValue(row.depth_10bp_total_usd))),
       avg_slippage_100k_bp: median(group.map((row) => numericValue(row.avg_slippage_100k_bp))),
       avg_slippage_1m_bp: median(group.map((row) => numericValue(row.avg_slippage_1m_bp))),
+      insufficient_depth_100k_count: group.filter((row) => row.insufficient_depth_100k === 1).length,
+      insufficient_depth_1m_count: group.filter((row) => row.insufficient_depth_1m === 1).length,
+      invalid_count: group.filter((row) => row.valid === 0).length,
       valid: group.some((row) => row.valid !== 0) ? 1 : 0
     };
   }).sort((a, b) => {
@@ -139,6 +185,12 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     .muted { color: #6c747d; }
     .status { font-weight: 650; }
     .toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .nav-links { display: flex; gap: 12px; flex-wrap: wrap; }
+    .health-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; margin: 10px 0 12px; }
+    .health-item { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px; min-width: 0; }
+    .health-item span { display: block; color: #59636d; font-size: 11px; font-weight: 750; text-transform: uppercase; }
+    .health-item strong { display: block; margin-top: 4px; font-size: 18px; font-variant-numeric: tabular-nums; }
+    .status-table-wrap { overflow-x: auto; background: #ffffff; border: 1px solid #d8d2c5; }
     .comparison-grid { display: grid; grid-template-columns: 1fr; gap: 14px; align-items: start; }
     .market-panel { background: #ffffff; border: 1px solid #d8d2c5; min-width: 0; }
     .market-panel h2 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; padding: 12px 14px; border-bottom: 1px solid #e8e2d6; background: #22333b; color: #ffffff; font-size: 18px; }
@@ -160,9 +212,13 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     .history-panel dd { margin: 0; font-weight: 650; }
     .summary-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
     .summary-list li { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px 12px; line-height: 1.45; }
+    .control-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0 12px; }
+    select { padding: 8px 10px; border: 1px solid #c9c0b0; background: #ffffff; color: #1d2329; }
+    .anomaly-list { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .anomaly-list li { background: #ffffff; border: 1px solid #d8d2c5; padding: 10px 12px; line-height: 1.45; }
     a { color: #0d5c63; }
     @media (max-width: 820px) {
-      .history-grid { grid-template-columns: 1fr; }
+      .history-grid, .health-grid { grid-template-columns: 1fr; }
       main { padding: 18px; }
       .market-panel table, .market-panel tbody, .market-panel tr, .market-panel td { display: block; }
       .market-panel thead { display: none; }
@@ -181,8 +237,23 @@ function indexHtml(options: StaticSiteOptions = {}): string {
   <main>
     <div class="toolbar">
       <p class="muted" id="freshness">Loading latest data...</p>
-      <a href="methodology.html">Methodology</a>
+      <nav class="nav-links" aria-label="Public benchmark links">
+        <a href="methodology.html">Methodology</a>
+        <a href="data/latest.json">latest.json</a>
+        <a href="data/health.json">health.json</a>
+      </nav>
     </div>
+    <section aria-labelledby="health-title">
+      <h2 id="health-title">Data Health</h2>
+      <p class="muted" id="health-note">Loading latest sample age and per venue/market status...</p>
+      <div class="health-grid" id="health-grid"></div>
+      <div class="status-table-wrap">
+        <table>
+          <thead><tr><th>Venue</th><th>Market</th><th>Status</th><th>Sample Age</th><th>Reason</th></tr></thead>
+          <tbody id="health-status"></tbody>
+        </table>
+      </div>
+    </section>
     <section aria-labelledby="comparison-title">
       <h2 id="comparison-title">Latest Comparison</h2>
       <div class="comparison-grid" id="comparison"></div>
@@ -193,9 +264,18 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       <ul class="summary-list" id="daily-summary"></ul>
     </section>
     <section aria-labelledby="history-title">
-      <h2 id="history-title">7 Day History</h2>
+      <h2 id="history-title">Venue / Market Drilldown</h2>
       <p class="muted" id="history-note">Loading 7 day history...</p>
+      <div class="control-row">
+        <label for="drilldown-select">Pair</label>
+        <select id="drilldown-select"></select>
+      </div>
       <div class="history-grid" id="history"></div>
+    </section>
+    <section aria-labelledby="anomaly-title">
+      <h2 id="anomaly-title">Public Anomaly Feed</h2>
+      <p class="muted" id="anomaly-note">Loading public anomaly events...</p>
+      <ul class="anomaly-list" id="anomalies"></ul>
     </section>
   </main>
   <script>
@@ -204,15 +284,17 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     const referenceVenues = ${JSON.stringify(referenceVenues)};
     const displayVenues = benchmarkVenues.concat(referenceVenues);
     const markets = ["BTC", "ETH", "SOL"];
-    const visibleMarkets = ["BTC", "ETH"];
+    const visibleMarkets = ["BTC", "ETH", "SOL"];
     const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
     const dataBaseUrl = ${JSON.stringify(dataBaseUrl)};
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
     const dataUrl = (name) => dataBaseUrl ? dataBaseUrl + "/data/" + name : "data/" + name;
     let refreshInFlight = false;
 
-    loadData().then(([latest, history, summaries]) => {
-        renderData(latest, history, summaries);
+    let selectedPair = null;
+
+    loadData().then(([latest, history, summaries, health, anomalies]) => {
+        renderData(latest, history, summaries, health, anomalies);
         setInterval(refreshData, 60_000);
       });
 
@@ -221,7 +303,9 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       return Promise.all([
         fetchJson("latest.json", suffix),
         fetchJson("history-7d.json", suffix),
-        fetchJson("daily-summary.json", suffix)
+        fetchJson("daily-summary.json", suffix),
+        fetchJson("health.json", suffix),
+        fetchJson("anomalies.json", suffix)
       ]);
     }
 
@@ -237,8 +321,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       refreshInFlight = true;
       const ts = Date.now();
       loadData(ts)
-        .then(([latest, history, summaries]) => {
-          renderData(latest, history, summaries);
+        .then(([latest, history, summaries, health, anomalies]) => {
+          renderData(latest, history, summaries, health, anomalies);
         })
         .catch(() => {
           const freshness = document.getElementById("freshness");
@@ -249,10 +333,12 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         });
     }
 
-    function renderData(latest, history, summaries) {
+    function renderData(latest, history, summaries, health, anomalies) {
       renderLatest(latest);
+      renderHealth(health);
       renderSummaries(summaries);
-      renderHistory(history);
+      renderDrilldown(history, health);
+      renderAnomalies(anomalies);
     }
 
     function renderLatest(latest) {
@@ -294,7 +380,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
           sortedRows.map((item) => {
             const rowClass = item.notListed ? " class='na-row'" : (item.reference ? " class='reference-row'" : "");
             return "<tr" + rowClass + ">" +
-              "<td class='venue-name' data-label='Venue'>" + labels[item.venue] + "</td>" +
+              "<td class='venue-name' data-label='Venue'><a href='#" + market + ":" + item.venue + "'>" + labels[item.venue] + "</a></td>" +
               "<td class='status' data-label='Status'>" + item.status + "</td>" +
               metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthWorst, depthRatio) +
               metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depth5Worst, depthRatio) +
@@ -369,17 +455,55 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       ).join("");
     }
 
-    function renderHistory(history) {
+    function renderHealth(health) {
+      const statusRows = Array.isArray(health?.statuses) ? health.statuses : [];
+      const age = health?.latestSampleAgeSeconds;
+      document.getElementById("health-note").textContent = "latest sample age and per venue/market status from public health.json";
+      document.getElementById("health-grid").innerHTML = [
+        ["latest sample age", age === null || age === undefined ? "N/A" : age + "s"],
+        ["expected targets", health?.expectedTargetCount ?? "N/A"],
+        ["valid samples", health?.validSampleCount ?? "N/A"],
+        ["failed", health?.failedCount ?? "N/A"],
+        ["not listed", health?.notListedCount ?? "N/A"],
+        ["insufficient depth", health?.insufficientDepthCount ?? "N/A"]
+      ].map(([label, value]) => "<div class='health-item'><span>" + label + "</span><strong>" + value + "</strong></div>").join("");
+      document.getElementById("health-status").innerHTML = statusRows.map((row) =>
+        "<tr><td>" + (labels[row.venue] ?? row.venue) + "</td><td>" + row.market + "</td><td>" + row.status + "</td><td>" + (row.latest_sample_age_seconds === null ? "N/A" : row.latest_sample_age_seconds + "s") + "</td><td>" + (row.reason ?? "") + "</td></tr>"
+      ).join("");
+    }
+
+    function renderDrilldown(history, health) {
       const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);
       document.getElementById("history-note").textContent = validRows.length
         ? validRows.length + " valid 15 minute rollup buckets in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
-      document.getElementById("history").innerHTML = markets.filter((market) => visibleMarkets.includes(market)).map((market) => {
-        const rows = validRows.filter((row) => row.market === market);
-        return "<div class='history-panel'>" +
-          "<h3>" + market + "</h3>" +
+      const pairs = displayVenues.flatMap((venue) => visibleMarkets.map((market) => ({ venue, market })));
+      const hashPair = location.hash ? location.hash.slice(1) : "";
+      selectedPair = pairs.some((pair) => pair.market + ":" + pair.venue === hashPair) ? hashPair : (selectedPair ?? "BTC:standx");
+      const select = document.getElementById("drilldown-select");
+      select.innerHTML = pairs.map((pair) => {
+        const value = pair.market + ":" + pair.venue;
+        return "<option value='" + value + "'" + (value === selectedPair ? " selected" : "") + ">" + pair.market + " / " + labels[pair.venue] + "</option>";
+      }).join("");
+      select.onchange = () => {
+        selectedPair = select.value;
+        location.hash = selectedPair;
+        renderDrilldown(history, health);
+      };
+      const [market, venue] = selectedPair.split(":");
+      const rows = validRows.filter((row) => row.market === market && row.venue === venue);
+      const expectedBuckets = Math.max(1, Math.ceil((7 * 24 * 60) / 15));
+      const missingSamples = Math.max(0, expectedBuckets - rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0));
+      const insufficient100k = rows.reduce((sum, row) => sum + (row.insufficient_depth_100k_count ?? 0), 0);
+      const insufficient1m = rows.reduce((sum, row) => sum + (row.insufficient_depth_1m_count ?? 0), 0);
+      document.getElementById("history").innerHTML =
+        "<div class='history-panel'>" +
+          "<h3>" + market + " / " + labels[venue] + "</h3>" +
           "<dl>" +
-            "<dt>Samples</dt><dd>" + rows.length + "</dd>" +
+            "<dt>Rollup buckets</dt><dd>" + rows.length + "</dd>" +
+            "<dt>Samples</dt><dd>" + rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0) + "</dd>" +
+            "<dt>missing samples</dt><dd>" + missingSamples + "</dd>" +
+            "<dt>insufficient-depth samples</dt><dd>" + (insufficient100k + insufficient1m) + "</dd>" +
             "<dt>Median spread</dt><dd>" + fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp</dd>" +
             "<dt>Median 3bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0) + "</dd>" +
             "<dt>Median 5bp depth</dt><dd>$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0) + "</dd>" +
@@ -388,7 +512,17 @@ function indexHtml(options: StaticSiteOptions = {}): string {
             "<dt>Median 1M slippage</dt><dd>" + fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp</dd>" +
           "</dl>" +
         "</div>";
-      }).join("");
+    }
+
+    function renderAnomalies(anomalies) {
+      const rows = Array.isArray(anomalies) ? anomalies.slice(0, 20) : [];
+      document.getElementById("anomaly-note").textContent = rows.length
+        ? rows.length + " recent public anomaly events."
+        : "No public anomaly events exported yet.";
+      document.getElementById("anomalies").innerHTML = rows.map((row) =>
+        "<li><strong>" + (row.market ?? "") + " / " + (labels[row.venue] ?? row.venue ?? "") + " / " + (row.metric ?? "") + "</strong>: " +
+        (row.message ?? "") + " <span class='muted'>start " + (row.start_timestamp_ms ?? "N/A") + ", end " + (row.end_timestamp_ms ?? "N/A") + ", baseline " + (row.baseline ?? "N/A") + ", observed " + (row.observed_value ?? "N/A") + ", dedupe_key " + (row.dedupe_key ?? row.dedupeKey ?? "N/A") + "</span></li>"
+      ).join("");
     }
 
     function median(values) {
@@ -462,6 +596,16 @@ function methodologyHtml(): string {
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
     <li>edgeX, GRVT, Lighter, Extended, and Nado are included as emerging benchmark venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
+
+  <h2>Public Data Files</h2>
+  <ul>
+    <li><code>data/latest.json</code>: latest target list and latest comparable metric rows.</li>
+    <li><code>data/health.json</code>: export time, latest sample age, expected target count, valid sample count, failed count, not-listed count, insufficient-depth count, unavailable count, and per venue/market recent status.</li>
+    <li><code>data/history-7d.json</code>: 15 minute venue/market rollups from persistent SQLite history, including sample counts and insufficient-depth counts.</li>
+    <li><code>data/daily-summary.json</code>: copyable daily market notes. These do not contain trading advice.</li>
+    <li><code>data/anomalies.json</code>: public anomaly events with metric, venue, market, start/end time, baseline, observed value, message, and dedupe key when available.</li>
+  </ul>
+  <p>The static JSON files are the public API for this milestone. CSV export and an interactive API are not currently provided. See <code>docs/public-data.md</code> in the repository for field semantics, freshness semantics, and consumer guidance.</p>
 </main>
 </body>
 </html>`;

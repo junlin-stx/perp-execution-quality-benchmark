@@ -95,7 +95,7 @@ Or publish continuously from the local collector:
 npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4 --publish-r2
 ```
 
-R2 object keys are `data/latest.json`, `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json`, optionally prefixed by `R2_PREFIX`.
+R2 object keys are `data/latest.json`, `data/health.json`, `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json`, optionally prefixed by `R2_PREFIX`.
 
 To make the public page read JSON from R2 instead of the same static host:
 
@@ -104,6 +104,10 @@ PUBLIC_DATA_BASE_URL="https://<r2-public-domain>/<optional-prefix>" npm run expo
 ```
 
 For GitHub Pages, set repository variables `PUBLIC_DATA_BASE_URL`, `R2_ACCOUNT_ID`, `R2_BUCKET`, and optional `R2_PREFIX`, plus repository secrets `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`.
+
+## Public Data Usage
+
+The static JSON files are the public API. See `docs/public-data.md` for file purposes, field meanings, freshness semantics, status meanings, ranking/reference rules, and CSV/API availability.
 
 ## Telegram Anomaly Channel
 
