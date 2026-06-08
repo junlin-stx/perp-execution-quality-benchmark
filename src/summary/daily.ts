@@ -30,6 +30,7 @@ export function buildDailySummaryText(_utcDate: string, market: Market, rows: Da
     .filter((row) => row.status === "listed" && row.medianSlippageBp !== null && referenceVenueSet.has(row.venue))
     .sort((a, b) => Number(a.medianSlippageBp) - Number(b.medianSlippageBp));
   const notListed = rows.filter((row) => row.status === "not_listed");
+  const insufficientDepth = rows.filter((row) => row.status === "insufficient_depth");
   const parts: string[] = [];
 
   if (listed.length > 0) {
@@ -37,11 +38,11 @@ export function buildDailySummaryText(_utcDate: string, market: Market, rows: Da
     const bestValue = Number(best.medianSlippageBp);
     const comparisons = listed.slice(1).map((row) => {
       const delta = Number(row.medianSlippageBp) - bestValue;
-      return `${venueLabels[row.venue]} +${delta.toFixed(2)} bp`;
+      return `${venueLabels[row.venue]} was +${delta.toFixed(2)} bp vs ${venueLabels[best.venue]}`;
     });
-    parts.push(`Yesterday ${market} 100k taker execution: ${venueLabels[best.venue]} best at ${bestValue.toFixed(2)} bp${comparisons.length ? `, ${comparisons.join(", ")}` : ""}.`);
+    parts.push(`${_utcDate} ${market} execution-quality note: ${venueLabels[best.venue]} led benchmark venues at ${bestValue.toFixed(2)} bp median 100k taker slippage${comparisons.length ? `; ${comparisons.join("; ")}` : ""}.`);
   } else {
-    parts.push(`Yesterday ${market} 100k taker execution: no benchmark venue had enough valid public samples.`);
+    parts.push(`${_utcDate} ${market} execution-quality note: no benchmark venue had enough valid public 100k taker slippage samples.`);
   }
 
   if (references.length > 0) {
@@ -50,6 +51,10 @@ export function buildDailySummaryText(_utcDate: string, market: Market, rows: Da
 
   for (const row of notListed) {
     parts.push(`${venueLabels[row.venue]} ${row.market} was not listed in the public ${venueLabels[row.venue]} perps symbol list during the UTC day.`);
+  }
+
+  if (insufficientDepth.length > 0) {
+    parts.push(`Insufficient public depth: ${insufficientDepth.map((row) => venueLabels[row.venue]).join(", ")}.`);
   }
 
   return parts.join(" ");
@@ -82,7 +87,17 @@ export function generateDailySummaries(db: BenchmarkDb, utcDate: string): string
       from venue_market_status
       where market = ? and status = 'not_listed'
     `).all(market) as unknown as DailyVenueMetric[];
-    const rows = [...listedRows, ...notListedRows];
+    const insufficientRows = raw.prepare(`
+      select venue, market, null as medianSlippageBp, 'insufficient_depth' as status
+      from execution_metrics
+      where market = ?
+        and local_timestamp_ms >= ?
+        and local_timestamp_ms < ?
+        and valid = 0
+        and (insufficient_depth_100k = 1 or insufficient_depth_1m = 1)
+      group by venue, market
+    `).all(market, startMs, endMs) as unknown as DailyVenueMetric[];
+    const rows = [...listedRows, ...notListedRows, ...insufficientRows];
     const text = buildDailySummaryText(utcDate, market, rows);
     db.upsertDailySummary(utcDate, market, text);
     summaries.push(text);

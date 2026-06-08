@@ -23,6 +23,8 @@ export interface AnomalyEvent {
   metric: AnomalyMetric;
   startTimestampMs: number;
   endTimestampMs: number;
+  baseline: number;
+  observedValue: number;
   message: string;
   dedupeKey: string;
 }
@@ -48,6 +50,8 @@ export function detectAnomalies(points: AnomalyPoint[], config: AnomalyConfig): 
         metric: first.metric,
         startTimestampMs: first.timestampMs,
         endTimestampMs: last.timestampMs,
+        baseline: first.baseline,
+        observedValue: Math.max(...window.map((row) => row.value)),
         message: `${first.market} ${first.venue} ${first.metric} degraded versus 7d baseline`,
         dedupeKey: `${key}:${first.timestampMs}-${last.timestampMs}`
       });

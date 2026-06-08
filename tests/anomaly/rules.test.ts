@@ -10,6 +10,8 @@ describe("anomaly rules", () => {
     ], { minConsecutive: 3, slippageBpDelta: 5, spreadBpDelta: 3 });
     expect(events).toHaveLength(1);
     expect(events[0].dedupeKey).toBe("grvt:BTC:avg_slippage_100k_bp:1-3");
+    expect(events[0].baseline).toBe(2);
+    expect(events[0].observedValue).toBe(10);
   });
 
   it("does not produce non-execution messages", () => {

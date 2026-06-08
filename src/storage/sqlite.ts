@@ -27,6 +27,18 @@ export interface SnapshotInsert {
   error: string | null;
 }
 
+export interface LatestSnapshotStatusRow {
+  venue: Venue;
+  market: Market;
+  symbol: string;
+  status: "ok" | "failed" | "not_listed";
+  reason: string | null;
+  local_timestamp_ms: number;
+  valid: number | null;
+  insufficient_depth_100k: number | null;
+  insufficient_depth_1m: number | null;
+}
+
 export class BenchmarkDb {
   private db: DatabaseSync;
 
@@ -102,6 +114,8 @@ export class BenchmarkDb {
         venue text not null,
         market text not null,
         metric text not null,
+        baseline real,
+        observed_value real,
         message text not null,
         start_timestamp_ms integer not null,
         end_timestamp_ms integer not null,
@@ -118,12 +132,21 @@ export class BenchmarkDb {
     this.ensureExecutionMetricColumn("sell_slippage_1m_bp", "real");
     this.ensureExecutionMetricColumn("avg_slippage_1m_bp", "real");
     this.ensureExecutionMetricColumn("insufficient_depth_1m", "integer not null default 0");
+    this.ensureAnomalyEventColumn("baseline", "real");
+    this.ensureAnomalyEventColumn("observed_value", "real");
   }
 
   private ensureExecutionMetricColumn(name: string, definition: string): void {
     const columns = this.db.prepare("pragma table_info(execution_metrics)").all() as Array<{ name: string }>;
     if (!columns.some((column) => column.name === name)) {
       this.db.exec(`alter table execution_metrics add column ${name} ${definition}`);
+    }
+  }
+
+  private ensureAnomalyEventColumn(name: string, definition: string): void {
+    const columns = this.db.prepare("pragma table_info(anomaly_events)").all() as Array<{ name: string }>;
+    if (!columns.some((column) => column.name === name)) {
+      this.db.exec(`alter table anomaly_events add column ${name} ${definition}`);
     }
   }
 
@@ -220,6 +243,29 @@ export class BenchmarkDb {
       where local_timestamp_ms >= ?
       order by local_timestamp_ms asc
     `).all(sinceMs);
+  }
+
+  getLatestSnapshotStatuses(): LatestSnapshotStatusRow[] {
+    return this.db.prepare(`
+      select
+        s.venue,
+        s.market,
+        s.symbol,
+        s.status,
+        s.error as reason,
+        s.local_timestamp_ms,
+        e.valid,
+        e.insufficient_depth_100k,
+        e.insufficient_depth_1m
+      from orderbook_snapshots s
+      join (
+        select venue, market, max(id) as id
+        from orderbook_snapshots
+        group by venue, market
+      ) latest on latest.id = s.id
+      left join execution_metrics e on e.snapshot_id = s.id
+      order by s.market asc, s.venue asc
+    `).all() as unknown as LatestSnapshotStatusRow[];
   }
 
   getRecentAnomalies(): unknown[] {

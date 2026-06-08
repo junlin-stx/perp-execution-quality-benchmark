@@ -57,6 +57,16 @@
     <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
     <li>edgeX, GRVT, Lighter, Extended, and Nado are included as emerging benchmark venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
+
+  <h2>Public Data Files</h2>
+  <ul>
+    <li><code>data/latest.json</code>: latest target list and latest comparable metric rows.</li>
+    <li><code>data/health.json</code>: export time, latest sample age, expected target count, valid sample count, failed count, not-listed count, insufficient-depth count, unavailable count, and per venue/market recent status.</li>
+    <li><code>data/history-7d.json</code>: 15 minute venue/market rollups from persistent SQLite history, including sample counts and insufficient-depth counts.</li>
+    <li><code>data/daily-summary.json</code>: copyable daily market notes. These do not contain trading advice.</li>
+    <li><code>data/anomalies.json</code>: public anomaly events with metric, venue, market, start/end time, baseline, observed value, message, and dedupe key when available.</li>
+  </ul>
+  <p>The static JSON files are the public API for this milestone. CSV export and an interactive API are not currently provided. See <code>docs/public-data.md</code> in the repository for field semantics, freshness semantics, and consumer guidance.</p>
 </main>
 </body>
 </html>
