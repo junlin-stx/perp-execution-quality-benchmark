@@ -138,7 +138,7 @@ describe("static export", () => {
     expect(health).toMatchObject({
       schemaVersion: 2,
       expectedTargetCount: 24,
-      expectedListedCount: 23,
+      expectedListedCount: 24,
       validSampleCount: 1,
       failedCount: 1,
       notListedCount: 1,
@@ -182,6 +182,63 @@ describe("static export", () => {
     const history = readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8");
     expect(latest).not.toContain("aevo");
     expect(history).not.toContain("aevo");
+    db.close();
+  });
+
+  it("exports one latest row per listed venue market when metrics exist", () => {
+    tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
+    const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
+    db.initialize();
+    const nowMs = Date.parse("2026-07-05T13:30:00.000Z");
+    db.upsertVenueMarketStatus({ venue: "standx", market: "SOL", symbol: "SOL-USD", status: "listed", reason: null });
+    const snapshotId = db.insertSnapshot({
+      venue: "standx",
+      market: "SOL",
+      symbol: "SOL-USD",
+      source: "fixture",
+      localTimestampMs: nowMs,
+      sourceTimestampMs: null,
+      latencyMs: 1,
+      bidCount: 1,
+      askCount: 1,
+      isPartial: false,
+      status: "ok",
+      error: null
+    });
+    db.insertMetrics(snapshotId, {
+      venue: "standx",
+      market: "SOL",
+      symbol: "SOL-USD",
+      localTimestampMs: nowMs,
+      midPrice: 100,
+      spreadBp: 1,
+      depth3BpBidUsd: 300,
+      depth3BpAskUsd: 300,
+      depth3BpTotalUsd: 600,
+      depth5BpBidUsd: 500,
+      depth5BpAskUsd: 500,
+      depth5BpTotalUsd: 1000,
+      depth10BpBidUsd: 1000,
+      depth10BpAskUsd: 1000,
+      depth10BpTotalUsd: 2000,
+      buySlippage100kBp: 2,
+      sellSlippage100kBp: 2,
+      avgSlippage100kBp: 2,
+      insufficientDepth100k: false,
+      buySlippage1mBp: null,
+      sellSlippage1mBp: null,
+      avgSlippage1mBp: null,
+      insufficientDepth1m: true,
+      valid: true,
+      error: null
+    });
+
+    exportLatestData(db, join(tempDir, "public"));
+    const latest = JSON.parse(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8"));
+    const rows = latest.rows.filter((row: { venue: string; market: string }) => row.venue === "standx" && row.market === "SOL");
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ symbol: "SOL-USD", status: "listed", spread_bp: 1 });
     db.close();
   });
 
@@ -243,7 +300,7 @@ describe("static export", () => {
     db.close();
   });
 
-  it("shows SOL on the public page so not-listed states are visible", () => {
+  it("shows SOL on the public page as a tracked market", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();

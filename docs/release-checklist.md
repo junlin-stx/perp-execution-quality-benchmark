@@ -76,7 +76,7 @@ Before launch, verify the methodology page states:
 - `health.json` explains latest sample age and per venue/market recent status.
 - `anomalies.json` is a public anomaly feed with metric, venue, market, time window, baseline, observed value, message, and dedupe key when available.
 - Hyperliquid 20-level public-book limitation.
-- StandX SOL is not replaced with another StandX market.
+- StandX SOL is tracked as `SOL-USD`, and unavailable venue-market pairs are not replaced with alternate markets.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.
 
 Command:

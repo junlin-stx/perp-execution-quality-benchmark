@@ -27,11 +27,11 @@ describe("daily summary", () => {
     expect(text).not.toContain("Hyperliquid +");
   });
 
-  it("mentions StandX SOL as not listed", () => {
+  it("mentions not-listed venue-market rows", () => {
     const text = buildDailySummaryText("2026-05-28", "SOL", [
-      { venue: "standx", market: "SOL", medianSlippageBp: null, status: "not_listed" }
+      { venue: "nado", market: "SOL", medianSlippageBp: null, status: "not_listed" }
     ]);
-    expect(text).toContain("StandX SOL was not listed");
+    expect(text).toContain("Nado SOL was not listed");
   });
 
   it("writes a copyable daily market note with reference and insufficient-depth caveats", () => {

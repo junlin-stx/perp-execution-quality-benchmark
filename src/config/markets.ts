@@ -22,7 +22,7 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "hyperliquid", market: "SOL", symbol: "SOL", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "standx", market: "BTC", symbol: "BTC-USD", status: "listed", source: "standx_depth_book" },
   { venue: "standx", market: "ETH", symbol: "ETH-USD", status: "listed", source: "standx_depth_book" },
-  { venue: "standx", market: "SOL", symbol: "SOL-USD", status: "not_listed", source: "standx_symbol_info" },
+  { venue: "standx", market: "SOL", symbol: "SOL-USD", status: "listed", source: "standx_depth_book" },
   { venue: "aster", market: "BTC", symbol: "BTCUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "aster", market: "ETH", symbol: "ETHUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "aster", market: "SOL", symbol: "SOLUSDT", status: "listed", source: "aster_usdm_depth" },

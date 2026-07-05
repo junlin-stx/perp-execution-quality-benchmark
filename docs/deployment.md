@@ -27,11 +27,11 @@ npm run run:benchmark -- --once
 The one-shot command should print:
 
 ```text
-collected=23 failed=0 not_listed=1
+collected=24 failed=0 not_listed=0
 exported static benchmark to public
 ```
 
-`not_listed=1` is expected while StandX does not list `SOL-USD`.
+StandX `SOL-USD` is now a listed target. A non-zero `not_listed` count means a tracked public symbol was missing during that collection round.
 
 ## Long-Running Collector
 

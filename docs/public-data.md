@@ -24,7 +24,7 @@ There is no login, private feed, CSV export, or interactive API in this mileston
 
 - `ok`: the latest public collection produced a comparable sample.
 - `failed`: the latest public collection failed for that venue/market.
-- `not_listed`: the target is intentionally tracked but not publicly listed, for example StandX `SOL-USD`.
+- `not_listed`: the target is intentionally tracked but was not present in the venue's public symbol list during the latest collection round.
 - `insufficient_depth`: the public book did not provide enough depth for at least one tracked taker-size metric.
 - `unavailable`: no recent public sample exists for a listed target.
 

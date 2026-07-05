@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Marked StandX `SOL-USD` as a listed benchmark target now that it appears in public StandX symbol, market, and depth data.
+- Updated methodology and deployment docs to remove the old StandX SOL not-listed expectation.
+
 ## 0.2.0 - 2026-06-08
 
 - Added generated `public/data/health.json` with freshness counts and per venue/market status.

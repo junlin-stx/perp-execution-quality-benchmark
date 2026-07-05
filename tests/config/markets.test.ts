@@ -10,9 +10,9 @@ describe("fixed benchmark universe", () => {
     expect(JSON.stringify(collectionTargets)).not.toContain("aevo");
   });
 
-  it("marks StandX SOL as not listed without replacing it", () => {
+  it("tracks StandX SOL as a listed depth-book target", () => {
     const target = collectionTargets.find((item) => item.venue === "standx" && item.market === "SOL");
-    expect(target).toMatchObject({ status: "not_listed", symbol: "SOL-USD" });
+    expect(target).toMatchObject({ status: "listed", symbol: "SOL-USD", source: "standx_depth_book" });
   });
 
   it("includes GRVT and Lighter BTC ETH SOL targets", () => {

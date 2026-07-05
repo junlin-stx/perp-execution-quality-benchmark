@@ -559,7 +559,7 @@ function methodologyHtml(): string {
   <h2>Data Sources</h2>
   <ul>
     <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
-    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX SOL is shown as not listed until <code>SOL-USD</code> appears in public symbol data.</li>
+    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX <code>SOL-USD</code> is tracked as the SOL market when it appears in public symbol data.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
     <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>
@@ -593,7 +593,7 @@ function methodologyHtml(): string {
     <li>Hidden, private, or venue-internal liquidity is not measured.</li>
     <li>Hyperliquid public books are limited to 20 levels per side.</li>
     <li>Hyperliquid and Aster are displayed as reference venues and are excluded from public <code>Best</code> calculations and daily winner summaries.</li>
-    <li>StandX SOL is not replaced with another StandX market; it remains <code>N/A: not listed</code>.</li>
+    <li>Tracked venue-market pairs are not replaced with alternate markets; if a public symbol disappears, that state is surfaced as <code>N/A: not listed</code>.</li>
     <li>edgeX, GRVT, Lighter, Extended, and Nado are included as emerging benchmark venues under the same public-book method, not as endorsed or sponsored venues.</li>
   </ul>
 

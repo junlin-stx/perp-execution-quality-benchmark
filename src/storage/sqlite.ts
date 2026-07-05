@@ -228,12 +228,20 @@ export class BenchmarkDb {
 
   getLatestGrid(): unknown[] {
     return this.db.prepare(`
+      with latest_metrics as (
+        select venue, market, symbol, spread_bp, depth_3bp_total_usd, depth_5bp_total_usd, depth_10bp_total_usd, avg_slippage_100k_bp, avg_slippage_1m_bp
+        from execution_metrics
+        where snapshot_id in (select max(snapshot_id) from execution_metrics group by venue, market)
+      )
       select venue, market, symbol, status, reason, null as spread_bp, null as depth_3bp_total_usd, null as depth_5bp_total_usd, null as depth_10bp_total_usd, null as avg_slippage_100k_bp, null as avg_slippage_1m_bp
-      from venue_market_status
+      from venue_market_status s
+      where not exists (
+        select 1 from latest_metrics m
+        where m.venue = s.venue and m.market = s.market
+      )
       union all
       select venue, market, symbol, 'listed' as status, null as reason, spread_bp, depth_3bp_total_usd, depth_5bp_total_usd, depth_10bp_total_usd, avg_slippage_100k_bp, avg_slippage_1m_bp
-      from execution_metrics
-      where snapshot_id in (select max(snapshot_id) from execution_metrics group by venue, market)
+      from latest_metrics
     `).all();
   }
 
