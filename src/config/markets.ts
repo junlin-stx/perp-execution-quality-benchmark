@@ -1,7 +1,7 @@
 export const venues = ["hyperliquid", "standx", "aster", "edgex", "grvt", "lighter", "extended", "nado"] as const;
 export const referenceVenues = ["hyperliquid", "aster"] as const;
 export const benchmarkVenues = venues.filter((venue) => !referenceVenues.includes(venue as (typeof referenceVenues)[number]));
-export const markets = ["BTC", "ETH", "SOL"] as const;
+export const markets = ["BTC", "ETH", "SOL", "XAU"] as const;
 
 export type Venue = (typeof venues)[number];
 export type ReferenceVenue = (typeof referenceVenues)[number];
@@ -20,25 +20,33 @@ export const collectionTargets: CollectionTarget[] = [
   { venue: "hyperliquid", market: "BTC", symbol: "BTC", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "ETH", symbol: "ETH", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "hyperliquid", market: "SOL", symbol: "SOL", status: "listed", source: "hyperliquid_l2_book" },
+  { venue: "hyperliquid", market: "XAU", symbol: "xyz:GOLD", status: "listed", source: "hyperliquid_l2_book" },
   { venue: "standx", market: "BTC", symbol: "BTC-USD", status: "listed", source: "standx_depth_book" },
   { venue: "standx", market: "ETH", symbol: "ETH-USD", status: "listed", source: "standx_depth_book" },
   { venue: "standx", market: "SOL", symbol: "SOL-USD", status: "listed", source: "standx_depth_book" },
+  { venue: "standx", market: "XAU", symbol: "XAU-USD", status: "listed", source: "standx_depth_book" },
   { venue: "aster", market: "BTC", symbol: "BTCUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "aster", market: "ETH", symbol: "ETHUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "aster", market: "SOL", symbol: "SOLUSDT", status: "listed", source: "aster_usdm_depth" },
+  { venue: "aster", market: "XAU", symbol: "XAUUSDT", status: "listed", source: "aster_usdm_depth" },
   { venue: "edgex", market: "BTC", symbol: "10000001", status: "listed", source: "edgex_depth" },
   { venue: "edgex", market: "ETH", symbol: "10000002", status: "listed", source: "edgex_depth" },
   { venue: "edgex", market: "SOL", symbol: "10000003", status: "listed", source: "edgex_depth" },
+  { venue: "edgex", market: "XAU", symbol: "10000234", status: "listed", source: "edgex_depth" },
   { venue: "grvt", market: "BTC", symbol: "BTC_USDT_Perp", status: "listed", source: "grvt_full_book" },
   { venue: "grvt", market: "ETH", symbol: "ETH_USDT_Perp", status: "listed", source: "grvt_full_book" },
   { venue: "grvt", market: "SOL", symbol: "SOL_USDT_Perp", status: "listed", source: "grvt_full_book" },
+  { venue: "grvt", market: "XAU", symbol: "XAU_USDT_Perp", status: "listed", source: "grvt_full_book" },
   { venue: "lighter", market: "BTC", symbol: "BTC", status: "listed", source: "lighter_order_book_orders" },
   { venue: "lighter", market: "ETH", symbol: "ETH", status: "listed", source: "lighter_order_book_orders" },
   { venue: "lighter", market: "SOL", symbol: "SOL", status: "listed", source: "lighter_order_book_orders" },
+  { venue: "lighter", market: "XAU", symbol: "XAU", status: "listed", source: "lighter_order_book_orders" },
   { venue: "extended", market: "BTC", symbol: "BTC-USD", status: "listed", source: "extended_orderbook" },
   { venue: "extended", market: "ETH", symbol: "ETH-USD", status: "listed", source: "extended_orderbook" },
   { venue: "extended", market: "SOL", symbol: "SOL-USD", status: "listed", source: "extended_orderbook" },
+  { venue: "extended", market: "XAU", symbol: "XAU-USD", status: "listed", source: "extended_orderbook" },
   { venue: "nado", market: "BTC", symbol: "2", status: "listed", source: "nado_market_liquidity" },
   { venue: "nado", market: "ETH", symbol: "4", status: "listed", source: "nado_market_liquidity" },
-  { venue: "nado", market: "SOL", symbol: "8", status: "listed", source: "nado_market_liquidity" }
+  { venue: "nado", market: "SOL", symbol: "8", status: "listed", source: "nado_market_liquidity" },
+  { venue: "nado", market: "XAU", symbol: "28", status: "listed", source: "nado_market_liquidity" }
 ];

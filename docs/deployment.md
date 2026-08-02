@@ -27,11 +27,11 @@ npm run run:benchmark -- --once
 The one-shot command should print:
 
 ```text
-collected=24 failed=0 not_listed=0
+collected=32 failed=0 not_listed=0
 exported static benchmark to public
 ```
 
-StandX `SOL-USD` is now a listed target. A non-zero `not_listed` count means a tracked public symbol was missing during that collection round.
+StandX `SOL-USD` and `XAU-USD` are listed targets. A non-zero `not_listed` count means a tracked public symbol was missing during that collection round.
 
 ## Long-Running Collector
 

@@ -34,7 +34,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Evidence: public URL is `https://junlin-stx.github.io/perp-execution-quality-benchmark/`.
    - Evidence: public URL serves `index.html` with `Perp Execution Quality` and `7 Day History`.
    - Evidence: public URL serves `methodology.html` with the metric formulas and comparability limits.
-   - Evidence: public URL serves `data/latest.json` with 24 targets.
+   - Evidence: public URL serves `data/latest.json` with 32 targets.
    - Evidence: public URL serves `data/health.json` with latest sample age, expected/valid/failed/not-listed/insufficient-depth/unavailable counts, and per venue/market status.
 
 3. Run the collector/export loop.
@@ -76,7 +76,7 @@ Before launch, verify the methodology page states:
 - `health.json` explains latest sample age and per venue/market recent status.
 - `anomalies.json` is a public anomaly feed with metric, venue, market, time window, baseline, observed value, message, and dedupe key when available.
 - Hyperliquid 20-level public-book limitation.
-- StandX SOL is tracked as `SOL-USD`, and unavailable venue-market pairs are not replaced with alternate markets.
+- StandX SOL and XAU are tracked as `SOL-USD` and `XAU-USD`; unavailable venue-market pairs are not replaced with alternate markets.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.
 
 Command:

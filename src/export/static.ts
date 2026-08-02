@@ -1,6 +1,6 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { benchmarkVenues, collectionTargets, referenceVenues, venues } from "../config/markets.js";
+import { benchmarkVenues, collectionTargets, markets, referenceVenues, venues } from "../config/markets.js";
 import { BenchmarkDb } from "../storage/sqlite.js";
 
 export interface StaticSiteOptions {
@@ -283,8 +283,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     const benchmarkVenues = ${JSON.stringify(benchmarkVenues)};
     const referenceVenues = ${JSON.stringify(referenceVenues)};
     const displayVenues = benchmarkVenues.concat(referenceVenues);
-    const markets = ["BTC", "ETH", "SOL"];
-    const visibleMarkets = ["BTC", "ETH", "SOL"];
+    const markets = ${JSON.stringify(markets)};
+    const visibleMarkets = ${JSON.stringify(markets)};
     const labels = { hyperliquid: "Hyperliquid", standx: "StandX", aster: "Aster", edgex: "edgeX", grvt: "GRVT", lighter: "Lighter", extended: "Extended", nado: "Nado" };
     const dataBaseUrl = ${JSON.stringify(dataBaseUrl)};
     const fmt = (value, digits = 2) => typeof value === "number" ? value.toLocaleString(undefined, { maximumFractionDigits: digits }) : "N/A";
@@ -554,12 +554,12 @@ function methodologyHtml(): string {
 <body>
 <main>
   <h1>Methodology</h1>
-  <p>This benchmark compares public perp order book execution quality for StandX, edgeX, GRVT, Lighter, Extended, and Nado on BTC, ETH, and SOL, with Hyperliquid and Aster shown as reference venues only. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
+  <p>This benchmark compares public perp order book execution quality for StandX, edgeX, GRVT, Lighter, Extended, and Nado on BTC, ETH, SOL, and XAU, with Hyperliquid and Aster shown as reference venues only. It is not a trading signal, liquidation monitor, whale tracker, vault dashboard, or venue marketing page.</p>
 
   <h2>Data Sources</h2>
   <ul>
-    <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side.</li>
-    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX <code>SOL-USD</code> is tracked as the SOL market when it appears in public symbol data.</li>
+    <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side. XAU maps to the HIP-3 <code>xyz:GOLD</code> market.</li>
+    <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX <code>SOL-USD</code> and <code>XAU-USD</code> are tracked when they appear in public symbol data.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
     <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>
