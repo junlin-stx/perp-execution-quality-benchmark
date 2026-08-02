@@ -5,7 +5,7 @@ Open collector and static benchmark for basic perp execution quality across Hype
 Public repo: https://github.com/junlin-stx/perp-execution-quality-benchmark
 Public benchmark: https://junlin-stx.github.io/perp-execution-quality-benchmark/
 
-The first phase compares BTC, ETH, and SOL using:
+The benchmark compares BTC, ETH, SOL, and XAU using:
 
 - spread
 - 10bp depth

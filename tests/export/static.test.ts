@@ -24,6 +24,7 @@ describe("static export", () => {
     expect(index).toContain("const venues = [\"hyperliquid\", \"standx\", \"aster\", \"edgex\", \"grvt\", \"lighter\", \"extended\", \"nado\"]");
     expect(index).toContain("const benchmarkVenues = [\"standx\",\"edgex\",\"grvt\",\"lighter\",\"extended\",\"nado\"]");
     expect(index).toContain("const referenceVenues = [\"hyperliquid\",\"aster\"]");
+    expect(index).toContain('const markets = ["BTC","ETH","SOL","XAU"]');
     expect(index).not.toContain("Binance Perps");
     expect(index).not.toContain("Aevo");
     expect(index).toContain("Aster");
@@ -137,8 +138,8 @@ describe("static export", () => {
 
     expect(health).toMatchObject({
       schemaVersion: 2,
-      expectedTargetCount: 24,
-      expectedListedCount: 24,
+      expectedTargetCount: 32,
+      expectedListedCount: 32,
       validSampleCount: 1,
       failedCount: 1,
       notListedCount: 1,
@@ -300,7 +301,7 @@ describe("static export", () => {
     db.close();
   });
 
-  it("shows SOL on the public page as a tracked market", () => {
+  it("shows SOL and XAU on the public page as tracked markets", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
@@ -308,9 +309,10 @@ describe("static export", () => {
 
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     const latest = readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8");
-    expect(index).toContain("const visibleMarkets = [\"BTC\", \"ETH\", \"SOL\"]");
+    expect(index).toContain('const visibleMarkets = ["BTC","ETH","SOL","XAU"]');
     expect(index).toContain("markets.filter((market) => visibleMarkets.includes(market))");
     expect(latest).toContain("\"market\": \"SOL\"");
+    expect(latest).toContain("\"market\": \"XAU\"");
     db.close();
   });
 

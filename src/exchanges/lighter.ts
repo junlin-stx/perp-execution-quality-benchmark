@@ -6,7 +6,8 @@ import { parseNumber, sortAsksAscending, sortBidsDescending } from "./parse.js";
 const lighterMarketIds: Record<Market, number> = {
   BTC: 1,
   ETH: 0,
-  SOL: 2
+  SOL: 2,
+  XAU: 92
 };
 
 function aggregateLighterOrders(orders: unknown, label: string): BookLevel[] {
