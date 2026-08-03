@@ -3,7 +3,7 @@ name: Benchmark Pages
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "0 * * * *"
 
 permissions:
   contents: read
