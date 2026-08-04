@@ -262,8 +262,9 @@ describe("static export", () => {
     expect(index).toContain("depthRatio");
     expect(index).toContain("\"3bp Depth\"");
     expect(index).toContain("\"5bp Depth\"");
-    expect(index).toContain("<th>Venue</th><th>Status</th><th>3bp Depth</th><th>5bp Depth</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th>");
-    expect(index.indexOf('metricCell(item, "depth_3bp_total_usd"')).toBeLessThan(index.indexOf('metricCell(item, "depth_10bp_total_usd"'));
+    expect(index).toContain("<th>Venue</th><th>Status</th><th>10bp Depth</th><th>5bp Depth</th><th>3bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th>");
+    expect(index.indexOf('metricCell(item, "depth_10bp_total_usd"')).toBeLessThan(index.indexOf('metricCell(item, "depth_5bp_total_usd"'));
+    expect(index.indexOf('metricCell(item, "depth_5bp_total_usd"')).toBeLessThan(index.indexOf('metricCell(item, "depth_3bp_total_usd"'));
     expect(index).toContain("Tick-size sensitive");
     expect(index).not.toContain('metricCell(item, "spread_bp"');
     expect(index).toContain("benchmarkRows");
@@ -442,6 +443,8 @@ describe("static export", () => {
     expect(index).toContain("Missing samples");
     expect(index).toContain("Insufficient-depth");
     expect(index).toContain("Median 10bp depth");
+    expect(index.indexOf("Median 10bp depth")).toBeLessThan(index.indexOf("Median 5bp depth"));
+    expect(index.indexOf("Median 5bp depth")).toBeLessThan(index.indexOf("Median 3bp depth"));
     expect(index).toContain("Median 100k slippage");
     db.close();
   });
