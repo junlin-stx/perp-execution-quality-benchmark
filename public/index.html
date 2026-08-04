@@ -135,7 +135,7 @@
     <div class="header-inner">
       <div class="header-copy">
         <h1>Perp Execution Quality Benchmark</h1>
-        <p>Open benchmark for spread, 3bp / 5bp / 10bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across StandX, edgeX, GRVT, Lighter, Extended, and Nado, with Hyperliquid and Aster shown as reference venues.</p>
+        <p>Open benchmark for spread, 10bp / 5bp / 3bp depth, and estimated 100,000 / 1,000,000 USD taker slippage across StandX, edgeX, GRVT, Lighter, Extended, and Nado, with Hyperliquid and Aster shown as reference venues.</p>
       </div>
       <div class="header-meta">
         <p class="muted" id="freshness" aria-live="polite">Loading latest data...</p>
@@ -370,9 +370,9 @@
         return "<tr" + rowClass + ">" +
           "<td class='venue-name' data-label='Venue'><a class='venue-link' data-pair='" + market + ":" + item.venue + "' href='#" + market + ":" + item.venue + "'>" + labels[item.venue] + (item.reference ? " (reference)" : "") + "</a></td>" +
           "<td class='status' data-label='Status'>" + item.status + "</td>" +
-          metricCell(item, "depth_3bp_total_usd", "3bp Depth", "usd", depth3Best, depthRatio) +
-          metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depthRatio) +
           metricCell(item, "depth_10bp_total_usd", "10bp Depth", "usd", depthBest, depthRatio) +
+          metricCell(item, "depth_5bp_total_usd", "5bp Depth", "usd", depth5Best, depthRatio) +
+          metricCell(item, "depth_3bp_total_usd", "3bp Depth", "usd", depth3Best, depthRatio) +
           metricCell(item, "avg_slippage_100k_bp", "100k Slippage", "bp", slipBest, spreadDelta) +
           metricCell(item, "avg_slippage_1m_bp", "1M Slippage", "bp", slip1mBest, spreadDelta) +
           spreadCell(item) +
@@ -381,7 +381,7 @@
       document.getElementById("comparison").innerHTML =
         "<article class='market-panel' role='tabpanel' aria-labelledby='market-tab-" + market + "'>" +
           "<h3>" + market + " execution quality</h3>" +
-          "<table><thead><tr><th>Venue</th><th>Status</th><th>3bp Depth</th><th>5bp Depth</th><th>10bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th></tr></thead><tbody>" +
+          "<table><thead><tr><th>Venue</th><th>Status</th><th>10bp Depth</th><th>5bp Depth</th><th>3bp Depth</th><th>100k Slippage</th><th>1M Slippage</th><th>Spread</th></tr></thead><tbody>" +
           "<tr class='group-row'><th colspan='8'>Benchmark venues</th></tr>" + rowHtml(benchmarkRows) +
           "<tr class='group-row'><th colspan='8'>Reference venues</th></tr>" + rowHtml(referenceRows) +
           "</tbody></table>" +
@@ -518,9 +518,9 @@
             historyStat("Missing samples", missingSamples) +
             historyStat("Insufficient-depth", insufficient100k + insufficient1m) +
             historyStat("Median spread", fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp") +
-            historyStat("Median 3bp depth", "$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0)) +
-            historyStat("Median 5bp depth", "$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0)) +
             historyStat("Median 10bp depth", "$" + fmt(median(rows.map((row) => row.depth_10bp_total_usd)), 0)) +
+            historyStat("Median 5bp depth", "$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0)) +
+            historyStat("Median 3bp depth", "$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0)) +
             historyStat("Median 100k slippage", fmt(median(rows.map((row) => row.avg_slippage_100k_bp)), 3) + " bp") +
             historyStat("Median 1M slippage", fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp") +
           "</dl>" +
