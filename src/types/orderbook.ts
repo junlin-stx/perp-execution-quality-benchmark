@@ -5,6 +5,13 @@ export interface BookLevel {
   size: number;
 }
 
+export interface DepthBookVariant {
+  aggregation: string;
+  bids: BookLevel[];
+  asks: BookLevel[];
+  sourceTimestampMs?: number;
+}
+
 export interface NormalizedOrderBook {
   venue: Venue;
   market: Market;
@@ -17,6 +24,8 @@ export interface NormalizedOrderBook {
   asks: BookLevel[];
   isPartial: boolean;
   spreadOverrideBp?: number;
+  depthBookVariants?: DepthBookVariant[];
+  depthBookMaxLevels?: number;
 }
 
 export interface SideSlippage {

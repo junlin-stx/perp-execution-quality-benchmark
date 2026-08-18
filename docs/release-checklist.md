@@ -75,7 +75,7 @@ Before launch, verify the methodology page states:
 - Latest JSON refresh every collector round and 7 day history exported as 15 minute rollups every 5 minutes.
 - `health.json` explains latest sample age and per venue/market recent status.
 - `anomalies.json` is a public anomaly feed with metric, venue, market, time window, baseline, observed value, message, and dedupe key when available.
-- Hyperliquid 20-level public-book limitation.
+- Hyperliquid multi-resolution depth selection, 20-level-per-precision limitation, and aggregation-boundary caveat.
 - StandX SOL and XAU are tracked as `SOL-USD` and `XAU-USD`; unavailable venue-market pairs are not replaced with alternate markets.
 - No alpha, liquidation, whale, vault, paid, login, or custom-alert scope.
 
