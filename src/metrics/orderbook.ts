@@ -17,6 +17,59 @@ export function sumDepthWithinBp(levels: BookLevel[], side: "bid" | "ask", bestP
   }, 0);
 }
 
+function coversDepthBand(
+  bids: BookLevel[],
+  asks: BookLevel[],
+  bestBid: number,
+  bestAsk: number,
+  bp: number,
+  maxLevels?: number
+): boolean {
+  if (!bids.length || !asks.length) return false;
+  const distance = bp / 10_000;
+  const bidBoundary = bestBid * (1 - distance);
+  const askBoundary = bestAsk * (1 + distance);
+  const bidComplete = maxLevels !== undefined && bids.length < maxLevels;
+  const askComplete = maxLevels !== undefined && asks.length < maxLevels;
+  return (bidComplete || bids[bids.length - 1].price <= bidBoundary)
+    && (askComplete || asks[asks.length - 1].price >= askBoundary);
+}
+
+function calculateDepthBand(
+  book: NormalizedOrderBook,
+  bids: BookLevel[],
+  asks: BookLevel[],
+  bestBid: number,
+  bestAsk: number,
+  bp: number
+): { bidUsd: number | null; askUsd: number | null; totalUsd: number | null } {
+  if (book.depthBookVariants === undefined) {
+    const bidUsd = sumDepthWithinBp(bids, "bid", bestBid, bp);
+    const askUsd = sumDepthWithinBp(asks, "ask", bestAsk, bp);
+    return { bidUsd, askUsd, totalUsd: bidUsd + askUsd };
+  }
+
+  const candidates = [
+    { bids, asks },
+    ...book.depthBookVariants.map((variant) => ({
+      bids: sortBids(variant.bids),
+      asks: sortAsks(variant.asks)
+    }))
+  ];
+  const candidate = candidates.find((item) => coversDepthBand(
+    item.bids,
+    item.asks,
+    bestBid,
+    bestAsk,
+    bp,
+    book.depthBookMaxLevels
+  ));
+  if (!candidate) return { bidUsd: null, askUsd: null, totalUsd: null };
+  const bidUsd = sumDepthWithinBp(candidate.bids, "bid", bestBid, bp);
+  const askUsd = sumDepthWithinBp(candidate.asks, "ask", bestAsk, bp);
+  return { bidUsd, askUsd, totalUsd: bidUsd + askUsd };
+}
+
 export function estimateTakerSlippage(
   levels: BookLevel[],
   side: "buy" | "sell",
@@ -73,12 +126,9 @@ export function calculateExecutionMetrics(book: NormalizedOrderBook): ExecutionM
     ? null
     : (buy1m.slippageBp + sell1m.slippageBp) / 2;
 
-  const depth3BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 3);
-  const depth3BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 3);
-  const depth5BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 5);
-  const depth5BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 5);
-  const depth10BpBidUsd = sumDepthWithinBp(bids, "bid", bestBid, 10);
-  const depth10BpAskUsd = sumDepthWithinBp(asks, "ask", bestAsk, 10);
+  const depth3Bp = calculateDepthBand(book, bids, asks, bestBid, bestAsk, 3);
+  const depth5Bp = calculateDepthBand(book, bids, asks, bestBid, bestAsk, 5);
+  const depth10Bp = calculateDepthBand(book, bids, asks, bestBid, bestAsk, 10);
 
   return {
     venue: book.venue,
@@ -87,15 +137,15 @@ export function calculateExecutionMetrics(book: NormalizedOrderBook): ExecutionM
     localTimestampMs: book.localTimestampMs,
     midPrice,
     spreadBp: book.spreadOverrideBp ?? ((bestAsk - bestBid) / midPrice) * 10_000,
-    depth3BpBidUsd,
-    depth3BpAskUsd,
-    depth3BpTotalUsd: depth3BpBidUsd + depth3BpAskUsd,
-    depth5BpBidUsd,
-    depth5BpAskUsd,
-    depth5BpTotalUsd: depth5BpBidUsd + depth5BpAskUsd,
-    depth10BpBidUsd,
-    depth10BpAskUsd,
-    depth10BpTotalUsd: depth10BpBidUsd + depth10BpAskUsd,
+    depth3BpBidUsd: depth3Bp.bidUsd,
+    depth3BpAskUsd: depth3Bp.askUsd,
+    depth3BpTotalUsd: depth3Bp.totalUsd,
+    depth5BpBidUsd: depth5Bp.bidUsd,
+    depth5BpAskUsd: depth5Bp.askUsd,
+    depth5BpTotalUsd: depth5Bp.totalUsd,
+    depth10BpBidUsd: depth10Bp.bidUsd,
+    depth10BpAskUsd: depth10Bp.askUsd,
+    depth10BpTotalUsd: depth10Bp.totalUsd,
     buySlippage100kBp: buy.slippageBp,
     sellSlippage100kBp: sell.slippageBp,
     avgSlippage100kBp,

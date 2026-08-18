@@ -74,4 +74,69 @@ describe("orderbook metrics", () => {
     expect(sumDepthWithinBp(book.bids, "bid", 100, 10)).toBeCloseTo(89980);
     expect(sumDepthWithinBp(book.asks, "ask", 100.1, 10)).toBeCloseTo(90110);
   });
+
+  it("uses the highest-precision Hyperliquid book that fully covers each depth band", () => {
+    const metrics = calculateExecutionMetrics({
+      ...book,
+      bids: [
+        { price: 10_000, size: 1 },
+        { price: 9_998, size: 1 },
+        { price: 9_996, size: 1 }
+      ],
+      asks: [
+        { price: 10_001, size: 1 },
+        { price: 10_003, size: 1 },
+        { price: 10_005, size: 1 }
+      ],
+      isPartial: true,
+      depthBookMaxLevels: 3,
+      depthBookVariants: [
+        {
+          aggregation: "5sf-m2",
+          bids: [
+            { price: 10_000, size: 10 },
+            { price: 9_996, size: 10 },
+            { price: 9_994, size: 10 }
+          ],
+          asks: [
+            { price: 10_001, size: 10 },
+            { price: 10_005, size: 10 },
+            { price: 10_007, size: 10 }
+          ]
+        },
+        {
+          aggregation: "5sf-m5",
+          bids: [
+            { price: 10_000, size: 100 },
+            { price: 9_995, size: 100 },
+            { price: 9_989, size: 100 }
+          ],
+          asks: [
+            { price: 10_001, size: 100 },
+            { price: 10_006, size: 100 },
+            { price: 10_012, size: 100 }
+          ]
+        }
+      ]
+    });
+
+    expect(metrics.depth3BpTotalUsd).toBeCloseTo(40_002);
+    expect(metrics.depth5BpTotalUsd).toBeCloseTo(400_020);
+    expect(metrics.depth10BpTotalUsd).toBeCloseTo(4_000_200);
+  });
+
+  it("returns unavailable depth when no Hyperliquid book covers the requested band", () => {
+    const metrics = calculateExecutionMetrics({
+      ...book,
+      bids: [{ price: 10_000, size: 1 }, { price: 9_998, size: 1 }],
+      asks: [{ price: 10_001, size: 1 }, { price: 10_003, size: 1 }],
+      isPartial: true,
+      depthBookMaxLevels: 2,
+      depthBookVariants: []
+    });
+
+    expect(metrics.depth3BpTotalUsd).toBeNull();
+    expect(metrics.depth5BpTotalUsd).toBeNull();
+    expect(metrics.depth10BpTotalUsd).toBeNull();
+  });
 });

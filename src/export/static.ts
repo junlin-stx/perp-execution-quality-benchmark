@@ -742,7 +742,7 @@ function methodologyHtml(): string {
 
   <h2>Data Sources</h2>
   <ul>
-    <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. Public response returns up to 20 levels per side. XAU maps to the HIP-3 <code>xyz:GOLD</code> market.</li>
+    <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. The collector requests full precision plus progressively aggregated <code>nSigFigs</code>/<code>mantissa</code> books, each limited to 20 levels per side. XAU maps to the HIP-3 <code>xyz:GOLD</code> market.</li>
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX <code>SOL-USD</code> and <code>XAU-USD</code> are tracked when they appear in public symbol data.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
     <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
@@ -764,6 +764,7 @@ function methodologyHtml(): string {
   <p>Bid depth sums <code>price * size</code> where <code>price >= best_bid * (1 - bp / 10000)</code>.</p>
   <p>Ask depth sums <code>price * size</code> where <code>price <= best_ask * (1 + bp / 10000)</code>.</p>
   <p>The public table shows two-sided total depth: <code>depth_total_usd = depth_bid_usd + depth_ask_usd</code>. JSON and SQLite keep bid, ask, and total fields for each depth band.</p>
+  <p>For Hyperliquid, each band uses the highest-precision returned book that reaches the requested boundary on both sides. If no returned precision covers the band, the metric is displayed as <code>N/A</code> instead of treating a truncated book as complete.</p>
 
   <h2>100,000 and 1,000,000 USD Estimated Taker Slippage</h2>
   <p>A buy order consumes asks from best ask upward until the target notional is filled. A sell order consumes bids from best bid downward. The public table shows both 100,000 USD and 1,000,000 USD average taker slippage.</p>
@@ -775,7 +776,7 @@ function methodologyHtml(): string {
   <ul>
     <li>Only public order book data is used.</li>
     <li>Hidden, private, or venue-internal liquidity is not measured.</li>
-    <li>Hyperliquid public books are limited to 20 levels per side.</li>
+    <li>Each Hyperliquid public-book precision is limited to 20 levels per side, so wider bands use documented price aggregation and remain approximate near aggregation boundaries.</li>
     <li>Hyperliquid and Aster are displayed as reference venues and are excluded from public <code>Best</code> calculations and daily winner summaries.</li>
     <li>Tracked venue-market pairs are not replaced with alternate markets; if a public symbol disappears, that state is surfaced as <code>N/A: not listed</code>.</li>
     <li>edgeX, GRVT, Lighter, Extended, and Nado are included as emerging benchmark venues under the same public-book method, not as endorsed or sponsored venues.</li>
