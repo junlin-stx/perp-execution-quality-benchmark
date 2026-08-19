@@ -41,7 +41,7 @@ Use public order book endpoints only. Do not use private accounts, privileged ma
 | Hyperliquid | BTC, ETH, SOL | `POST https://api.hyperliquid.xyz/info` with `type=l2Book` | Returns up to 20 levels per side. |
 | Aevo | BTC-PERP, ETH-PERP, SOL-PERP | `GET https://api.aevo.xyz/orderbook` | Use public snapshot response by `instrument_name`. |
 | StandX | BTC-USD, ETH-USD, SOL unavailable | `GET https://perps.standx.com/api/query_depth_book` | Sort bids descending and asks ascending client-side. Confirm available markets through `query_symbol_info`. |
-| edgeX | BTCUSD, ETHUSD, SOLUSD | `GET https://pro.edgex.exchange/api/v1/public/quote/getDepth` | Public REST snapshot with fixed depth levels; request level 200. |
+| edgeX | BTCUSDC, ETHUSDC, SOLUSDC | `GET https://edgex-prod-v2.edgex.exchange/api/v2/public/quote/getDepth` | Public REST snapshot with fixed depth levels; request level 200. |
 
 Every sample stores the source URL label, normalized venue, normalized market, venue-native symbol, fetch latency, source timestamp when available, local collection timestamp, level count, partial-data flag, and error reason when a fetch or normalization step fails.
 

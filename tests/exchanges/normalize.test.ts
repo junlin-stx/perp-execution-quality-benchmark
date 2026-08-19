@@ -44,17 +44,23 @@ describe("adapter normalization", () => {
   });
 
   it("normalizes edgeX object levels from the depth snapshot", () => {
-    const book = normalizeEdgexBook("ETH", "10000002", {
+    const book = normalizeEdgexBook("ETH", "30000002", {
       data: [{
-        contractName: "ETHUSD",
+        contractName: "ETHUSDC",
         asks: [{ price: "101", size: "3" }],
         bids: [{ price: "100", size: "2" }]
       }]
     }, 1, 5);
     expect(book.venue).toBe("edgex");
-    expect(book.symbol).toBe("10000002");
+    expect(book.symbol).toBe("30000002");
     expect(book.bids[0]).toEqual({ price: 100, size: 2 });
     expect(book.asks[0]).toEqual({ price: 101, size: 3 });
+  });
+
+  it("rejects an empty edgeX order book", () => {
+    expect(() => normalizeEdgexBook("BTC", "30000001", {
+      data: [{ contractName: "BTCUSDC", asks: [], bids: [] }]
+    }, 1, 5)).toThrow("empty edgex order book");
   });
 
   it("normalizes GRVT aggregated orderbook levels", () => {

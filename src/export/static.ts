@@ -745,7 +745,7 @@ function methodologyHtml(): string {
     <li>Hyperliquid: <code>POST https://api.hyperliquid.xyz/info</code> with <code>type=l2Book</code>. The collector requests full precision plus progressively aggregated <code>nSigFigs</code>/<code>mantissa</code> books, each limited to 20 levels per side. XAU maps to the HIP-3 <code>xyz:GOLD</code> market.</li>
     <li>StandX: <code>GET https://perps.standx.com/api/query_depth_book</code> for depth and slippage; <code>GET https://perps.standx.com/api/query_symbol_market</code> for quoted top-of-book spread. StandX <code>SOL-USD</code> and <code>XAU-USD</code> are tracked when they appear in public symbol data.</li>
     <li>Aster: <code>GET https://fapi.asterdex.com/fapi/v1/depth</code> for USDT-margined perpetual futures.</li>
-    <li>edgeX: <code>GET https://pro.edgex.exchange/api/v1/public/quote/getDepth</code> with public contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
+    <li>edgeX: <code>GET https://edgex-prod-v2.edgex.exchange/api/v2/public/quote/getDepth</code> with public V2 contract ids. The public REST snapshot supports fixed depth levels; this benchmark requests level 200.</li>
     <li>GRVT: <code>POST https://market-data.grvt.io/full/v1/book</code> for public perpetual order book depth. This benchmark requests 50 levels per side.</li>
     <li>Lighter: <code>GET https://mainnet.zklighter.elliot.ai/api/v1/orderBookOrders</code> for public order-level snapshots. This benchmark requests up to 250 orders per side and aggregates them into price levels before computing metrics.</li>
     <li>Extended: <code>GET https://api.starknet.extended.exchange/api/v1/info/markets/{market}/orderbook</code> for public perpetual order book depth.</li>
@@ -793,5 +793,6 @@ function methodologyHtml(): string {
   <p>The static JSON files are the public API for this milestone. CSV export and an interactive API are not currently provided. See <code>docs/public-data.md</code> in the repository for field semantics, freshness semantics, and consumer guidance.</p>
 </main>
 </body>
-</html>`;
+</html>
+`;
 }

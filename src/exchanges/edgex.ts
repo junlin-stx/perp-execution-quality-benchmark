@@ -25,6 +25,9 @@ export function normalizeEdgexBook(
   const snapshots = Array.isArray(data.data) ? data.data : [];
   const snapshot = snapshots[0] as { contractName?: unknown; asks?: unknown; bids?: unknown; endVersion?: unknown } | undefined;
   if (!snapshot) throw new Error("invalid edgex depth snapshot");
+  const bids = sortBidsDescending(parseEdgexLevels(snapshot.bids, "edgex.bids"));
+  const asks = sortAsksAscending(parseEdgexLevels(snapshot.asks, "edgex.asks"));
+  if (bids.length === 0 || asks.length === 0) throw new Error("empty edgex order book");
   return {
     venue: "edgex",
     market,
@@ -33,14 +36,14 @@ export function normalizeEdgexBook(
     localTimestampMs,
     sourceTimestampMs: snapshot.endVersion === undefined ? undefined : parseNumber(snapshot.endVersion, "edgex.endVersion"),
     latencyMs,
-    bids: sortBidsDescending(parseEdgexLevels(snapshot.bids, "edgex.bids")),
-    asks: sortAsksAscending(parseEdgexLevels(snapshot.asks, "edgex.asks")),
+    bids,
+    asks,
     isPartial: true
   };
 }
 
 export async function fetchEdgexOrderBook(target: CollectionTarget): Promise<NormalizedOrderBook> {
-  const url = `https://pro.edgex.exchange/api/v1/public/quote/getDepth?contractId=${encodeURIComponent(target.symbol)}&level=200`;
+  const url = `https://edgex-prod-v2.edgex.exchange/api/v2/public/quote/getDepth?contractId=${encodeURIComponent(target.symbol)}&level=200`;
   const { data, latencyMs, localTimestampMs } = await fetchJson(url);
   return normalizeEdgexBook(target.market, target.symbol, data, localTimestampMs, latencyMs);
 }

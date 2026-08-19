@@ -15,12 +15,21 @@ describe("fixed benchmark universe", () => {
     expect(target).toMatchObject({ status: "listed", symbol: "SOL-USD", source: "standx_depth_book" });
   });
 
+  it("tracks edgeX V2 contract ids", () => {
+    expect(collectionTargets.filter((item) => item.venue === "edgex").map((item) => item.symbol)).toEqual([
+      "30000001",
+      "30000002",
+      "30000003",
+      "30000005"
+    ]);
+  });
+
   it("tracks XAU with each venue's live public symbol", () => {
     expect(collectionTargets.filter((item) => item.market === "XAU")).toEqual([
       { venue: "hyperliquid", market: "XAU", symbol: "xyz:GOLD", status: "listed", source: "hyperliquid_l2_book" },
       { venue: "standx", market: "XAU", symbol: "XAU-USD", status: "listed", source: "standx_depth_book" },
       { venue: "aster", market: "XAU", symbol: "XAUUSDT", status: "listed", source: "aster_usdm_depth" },
-      { venue: "edgex", market: "XAU", symbol: "10000234", status: "listed", source: "edgex_depth" },
+      { venue: "edgex", market: "XAU", symbol: "30000005", status: "listed", source: "edgex_depth" },
       { venue: "grvt", market: "XAU", symbol: "XAU_USDT_Perp", status: "listed", source: "grvt_full_book" },
       { venue: "lighter", market: "XAU", symbol: "XAU", status: "listed", source: "lighter_order_book_orders" },
       { venue: "extended", market: "XAU", symbol: "XAU-USD", status: "listed", source: "extended_orderbook" },
