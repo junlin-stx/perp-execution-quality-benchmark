@@ -50,6 +50,8 @@ describe("static export", () => {
     expect(methodology).toContain("Spread is a top-of-book signal and can be affected by venue tick size or public-book aggregation");
     expect(methodology).toContain("depth_total_usd = depth_bid_usd + depth_ask_usd");
     expect(methodology).toContain("JSON and SQLite keep bid, ask, and total fields");
+    expect(methodology).toContain("highest-precision returned book that reaches the requested boundary on both sides");
+    expect(methodology).toContain("nSigFigs");
     expect(methodology).toContain("100,000 USD");
     expect(methodology).toContain("1,000,000 USD");
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");

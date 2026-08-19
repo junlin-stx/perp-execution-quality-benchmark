@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Migrated edgeX collection to the V2 public depth API and current contract ids, with empty-book rejection to prevent invalid samples from being recorded as successful collections.
+- Improved Hyperliquid 3bp/5bp/10bp coverage with progressively aggregated public books and coverage-aware band selection.
 - Added XAU across all eight venues using each venue's live public symbol or product id.
 - Marked StandX `SOL-USD` as a listed benchmark target now that it appears in public StandX symbol, market, and depth data.
 - Updated methodology and deployment docs to remove the old StandX SOL not-listed expectation.
