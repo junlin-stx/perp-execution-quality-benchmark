@@ -8,6 +8,9 @@ export interface StaticSiteOptions {
   nowMs?: number;
 }
 
+const HISTORY_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_HISTORY_BUCKET_MS = 15 * 60 * 1000;
+
 export function exportStaticSite(db: BenchmarkDb, outputDir = "public", options: StaticSiteOptions = {}): void {
   exportLatestData(db, outputDir);
   exportHealthData(db, outputDir, { nowMs: options.nowMs });
@@ -75,12 +78,13 @@ export function exportHistoryData(db: BenchmarkDb, outputDir = "public", options
   mkdirSync(dataDir, { recursive: true });
   const activeVenues = new Set<string>(venues);
   const nowMs = options.nowMs ?? Date.now();
-  const bucketMs = options.bucketMs ?? 15 * 60 * 1000;
+  const bucketMs = options.bucketMs ?? DEFAULT_HISTORY_BUCKET_MS;
   const history = rollupHistory(
-    filterActiveVenueRows(db.getHistorySince(nowMs - 7 * 24 * 60 * 60 * 1000), activeVenues),
+    filterActiveVenueRows(db.getHistorySince(nowMs - HISTORY_WINDOW_MS), activeVenues),
     bucketMs
   );
   writeJson(join(dataDir, "history-7d.json"), history);
+  writeJson(join(dataDir, "history-summary-7d.json"), summarizeHistory(history, bucketMs));
 }
 
 export function exportSummaryData(db: BenchmarkDb, outputDir = "public"): void {
@@ -150,6 +154,42 @@ function rollupHistory(rows: unknown[], bucketMs: number): unknown[] {
     const right = b as { local_timestamp_ms: number; venue: string; market: string };
     return left.local_timestamp_ms - right.local_timestamp_ms || left.market.localeCompare(right.market) || left.venue.localeCompare(right.venue);
   });
+}
+
+function summarizeHistory(rows: unknown[], bucketMs: number): unknown[] {
+  const groups = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of rows) {
+    const item = row as Record<string, unknown>;
+    const venue = item.venue;
+    const market = item.market;
+    if (item.valid === 0 || numericValue(item.spread_bp) === null || typeof venue !== "string" || typeof market !== "string") continue;
+    const key = `${venue}:${market}`;
+    groups.set(key, [...(groups.get(key) ?? []), item]);
+  }
+
+  const expectedBuckets = Math.max(1, Math.ceil(HISTORY_WINDOW_MS / bucketMs));
+  return [...groups.entries()].map(([key, group]) => {
+    const [venue, market] = key.split(":");
+    const sampleCount = group.reduce((sum, row) => sum + (numericValue(row.sample_count) ?? 0), 0);
+    return {
+      venue,
+      market,
+      rollup_bucket_count: group.length,
+      sample_count: sampleCount,
+      missing_sample_count: Math.max(0, expectedBuckets - sampleCount),
+      insufficient_depth_count: group.reduce((sum, row) => (
+        sum
+        + (numericValue(row.insufficient_depth_100k_count) ?? 0)
+        + (numericValue(row.insufficient_depth_1m_count) ?? 0)
+      ), 0),
+      spread_bp: median(group.map((row) => numericValue(row.spread_bp))),
+      depth_3bp_total_usd: median(group.map((row) => numericValue(row.depth_3bp_total_usd))),
+      depth_5bp_total_usd: median(group.map((row) => numericValue(row.depth_5bp_total_usd))),
+      depth_10bp_total_usd: median(group.map((row) => numericValue(row.depth_10bp_total_usd))),
+      avg_slippage_100k_bp: median(group.map((row) => numericValue(row.avg_slippage_100k_bp))),
+      avg_slippage_1m_bp: median(group.map((row) => numericValue(row.avg_slippage_1m_bp)))
+    };
+  }).sort((left, right) => left.market.localeCompare(right.market) || left.venue.localeCompare(right.venue));
 }
 
 function numericValue(value: unknown): number | null {
@@ -395,11 +435,11 @@ function indexHtml(options: StaticSiteOptions = {}): string {
     let selectedPair = null;
     let latestState = null;
     let rowMapState = null;
-    let historyState = null;
+    let historySummaryState = null;
     let healthState = null;
 
-    loadData().then(([latest, history, summaries, health, anomalies]) => {
-        renderData(latest, history, summaries, health, anomalies);
+    loadData().then(([latest, historySummary, summaries, health, anomalies]) => {
+        renderData(latest, historySummary, summaries, health, anomalies);
         setInterval(refreshData, 60_000);
       });
 
@@ -410,14 +450,14 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         renderMarketTabs();
         if (latestState && rowMapState) renderComparison(latestState, rowMapState);
       }
-      if (historyState && healthState) renderDrilldown(historyState, healthState);
+      if (historySummaryState && healthState) renderDrilldown(historySummaryState, healthState);
     });
 
     function loadData(ts = null) {
       const suffix = ts ? "?ts=" + ts : "";
       return Promise.all([
         fetchJson("latest.json", suffix),
-        fetchJson("history-7d.json", suffix),
+        fetchJson("history-summary-7d.json", suffix),
         fetchJson("daily-summary.json", suffix),
         fetchJson("health.json", suffix),
         fetchJson("anomalies.json", suffix)
@@ -436,8 +476,8 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       refreshInFlight = true;
       const ts = Date.now();
       loadData(ts)
-        .then(([latest, history, summaries, health, anomalies]) => {
-          renderData(latest, history, summaries, health, anomalies);
+        .then(([latest, historySummary, summaries, health, anomalies]) => {
+          renderData(latest, historySummary, summaries, health, anomalies);
         })
         .catch(() => {
           const freshness = document.getElementById("freshness");
@@ -448,14 +488,14 @@ function indexHtml(options: StaticSiteOptions = {}): string {
         });
     }
 
-    function renderData(latest, history, summaries, health, anomalies) {
+    function renderData(latest, historySummary, summaries, health, anomalies) {
       latestState = latest;
-      historyState = history;
+      historySummaryState = historySummary;
       healthState = health;
       renderLatest(latest);
       renderHealth(health);
       renderSummaries(summaries);
-      renderDrilldown(history, health);
+      renderDrilldown(historySummary, health);
       renderAnomalies(anomalies);
     }
 
@@ -558,7 +598,7 @@ function indexHtml(options: StaticSiteOptions = {}): string {
           event.preventDefault();
           selectedPair = link.dataset.pair;
           location.hash = selectedPair;
-          if (historyState && healthState) renderDrilldown(historyState, healthState);
+          if (historySummaryState && healthState) renderDrilldown(historySummaryState, healthState);
           document.getElementById("history-title").scrollIntoView({ behavior: "smooth", block: "start" });
         };
       });
@@ -651,10 +691,10 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       return String(status ?? "unknown").split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
     }
 
-    function renderDrilldown(history, health) {
-      const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);
-      document.getElementById("history-note").textContent = validRows.length
-        ? validRows.length + " valid 15 minute rollup buckets in the exported 7 day window."
+    function renderDrilldown(historySummary, health) {
+      const validBucketCount = historySummary.reduce((sum, row) => sum + (row.rollup_bucket_count ?? 0), 0);
+      document.getElementById("history-note").textContent = validBucketCount
+        ? validBucketCount + " valid 15 minute rollup buckets in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
       const pairs = displayVenues.flatMap((venue) => visibleMarkets.map((market) => ({ venue, market })));
       const hashPair = location.hash ? location.hash.slice(1) : "";
@@ -667,29 +707,25 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       const updatePair = () => {
         selectedPair = marketSelect.value + ":" + venueSelect.value;
         location.hash = selectedPair;
-        renderDrilldown(history, health);
+        renderDrilldown(historySummary, health);
       };
       marketSelect.onchange = updatePair;
       venueSelect.onchange = updatePair;
-      const rows = validRows.filter((row) => row.market === market && row.venue === venue);
-      const expectedBuckets = Math.max(1, Math.ceil((7 * 24 * 60) / 15));
-      const missingSamples = Math.max(0, expectedBuckets - rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0));
-      const insufficient100k = rows.reduce((sum, row) => sum + (row.insufficient_depth_100k_count ?? 0), 0);
-      const insufficient1m = rows.reduce((sum, row) => sum + (row.insufficient_depth_1m_count ?? 0), 0);
+      const row = historySummary.find((item) => item.market === market && item.venue === venue) ?? {};
       document.getElementById("history").innerHTML =
         "<div class='history-panel'>" +
           "<h3>" + market + " / " + labels[venue] + "</h3>" +
           "<dl>" +
-            historyStat("Rollup buckets", rows.length) +
-            historyStat("Samples", rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0)) +
-            historyStat("Missing samples", missingSamples) +
-            historyStat("Insufficient-depth", insufficient100k + insufficient1m) +
-            historyStat("Median spread", fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp") +
-            historyStat("Median 10bp depth", "$" + fmt(median(rows.map((row) => row.depth_10bp_total_usd)), 0)) +
-            historyStat("Median 5bp depth", "$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0)) +
-            historyStat("Median 3bp depth", "$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0)) +
-            historyStat("Median 100k slippage", fmt(median(rows.map((row) => row.avg_slippage_100k_bp)), 3) + " bp") +
-            historyStat("Median 1M slippage", fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp") +
+            historyStat("Rollup buckets", row.rollup_bucket_count ?? 0) +
+            historyStat("Samples", row.sample_count ?? 0) +
+            historyStat("Missing samples", row.missing_sample_count ?? 0) +
+            historyStat("Insufficient-depth", row.insufficient_depth_count ?? 0) +
+            historyStat("Median spread", fmt(row.spread_bp, 3) + " bp") +
+            historyStat("Median 10bp depth", "$" + fmt(row.depth_10bp_total_usd, 0)) +
+            historyStat("Median 5bp depth", "$" + fmt(row.depth_5bp_total_usd, 0)) +
+            historyStat("Median 3bp depth", "$" + fmt(row.depth_3bp_total_usd, 0)) +
+            historyStat("Median 100k slippage", fmt(row.avg_slippage_100k_bp, 3) + " bp") +
+            historyStat("Median 1M slippage", fmt(row.avg_slippage_1m_bp, 3) + " bp") +
           "</dl>" +
         "</div>";
     }
@@ -709,12 +745,6 @@ function indexHtml(options: StaticSiteOptions = {}): string {
       ).join("");
     }
 
-    function median(values) {
-      const nums = values.filter((value) => typeof value === "number" && Number.isFinite(value)).sort((a, b) => a - b);
-      if (!nums.length) return null;
-      const mid = Math.floor(nums.length / 2);
-      return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
-    }
   </script>
 </body>
 </html>`;
@@ -787,6 +817,7 @@ function methodologyHtml(): string {
     <li><code>data/latest.json</code>: latest target list and latest comparable metric rows.</li>
     <li><code>data/health.json</code>: export time, latest sample age, expected target count, valid sample count, failed count, not-listed count, insufficient-depth count, unavailable count, and per venue/market recent status.</li>
     <li><code>data/history-7d.json</code>: 15 minute venue/market rollups from persistent SQLite history, including sample counts and insufficient-depth counts.</li>
+    <li><code>data/history-summary-7d.json</code>: compact 7 day venue/market aggregates used by the public drilldown.</li>
     <li><code>data/daily-summary.json</code>: copyable daily market notes. These do not contain trading advice.</li>
     <li><code>data/anomalies.json</code>: public anomaly events with metric, venue, market, start/end time, baseline, observed value, message, and dedupe key when available.</li>
   </ul>

@@ -95,7 +95,7 @@ Or publish continuously from the local collector:
 npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4 --publish-r2
 ```
 
-R2 object keys are `data/latest.json`, `data/health.json`, `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json`, optionally prefixed by `R2_PREFIX`.
+R2 object keys are `data/latest.json`, `data/health.json`, `data/history-7d.json`, `data/history-summary-7d.json`, `data/daily-summary.json`, and `data/anomalies.json`, optionally prefixed by `R2_PREFIX`.
 
 To make the public page read JSON from R2 instead of the same static host:
 

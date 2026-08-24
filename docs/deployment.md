@@ -165,7 +165,7 @@ Published object keys:
 
 - `data/latest.json` with `Cache-Control: public, max-age=30, must-revalidate`
 - `data/health.json` with `Cache-Control: public, max-age=30, must-revalidate`
-- `data/history-7d.json`, `data/daily-summary.json`, and `data/anomalies.json` with `Cache-Control: public, max-age=300, must-revalidate`
+- `data/history-7d.json`, `data/history-summary-7d.json`, `data/daily-summary.json`, and `data/anomalies.json` with `Cache-Control: public, max-age=300, must-revalidate`
 
 ## Static Serving
 
@@ -176,6 +176,7 @@ Serve the output directory as a static site. The public URL must serve:
 - `/data/latest.json`
 - `/data/health.json`
 - `/data/history-7d.json`
+- `/data/history-summary-7d.json`
 - `/data/daily-summary.json`
 - `/data/anomalies.json`
 
