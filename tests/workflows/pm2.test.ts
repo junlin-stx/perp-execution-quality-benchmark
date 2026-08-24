@@ -1,5 +1,5 @@
 import { createRequire } from "node:module";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
@@ -44,5 +44,15 @@ describe("pm2 benchmark process entry", () => {
       "pm2:logs": "pm2 logs perp-bench",
       "pm2:save": "pm2 save"
     });
+  });
+
+  it("exposes a local static preview script", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8"));
+
+    expect(packageJson.scripts).toMatchObject({
+      preview: "node scripts/preview-server.mjs"
+    });
+    expect(existsSync("scripts/preview-server.mjs")).toBe(true);
+    expect(readFileSync("scripts/preview-server.mjs", "utf8")).toContain("createServer");
   });
 });

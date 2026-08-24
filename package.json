@@ -9,6 +9,7 @@
     "collect": "tsx src/cli.ts",
     "export": "tsx src/export/cli.ts",
     "run:benchmark": "tsx src/runner/cli.ts",
+    "preview": "node scripts/preview-server.mjs",
     "summary": "tsx src/summary/cli.ts",
     "anomaly:dry-run": "tsx src/anomaly/cli.ts",
     "telegram:send-anomalies": "tsx src/telegram/send-anomalies.ts",
