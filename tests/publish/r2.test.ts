@@ -35,12 +35,18 @@ describe("R2 publisher", () => {
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(join(dataDir, "latest.json"), "{}", { flag: "w" });
     writeFileSync(join(dataDir, "history-7d.json"), "[]", { flag: "w" });
+    writeFileSync(join(dataDir, "history-summary-7d.json"), "[]", { flag: "w" });
 
     const specs = dataObjectSpecs(join(tempDir, "public"), "perp");
 
-    expect(specs.map((spec) => spec.key)).toEqual(["perp/data/history-7d.json", "perp/data/latest.json"]);
+    expect(specs.map((spec) => spec.key)).toEqual([
+      "perp/data/history-7d.json",
+      "perp/data/history-summary-7d.json",
+      "perp/data/latest.json"
+    ]);
     expect(specs.find((spec) => spec.key.endsWith("latest.json"))?.cacheControl).toBe("public, max-age=30, must-revalidate");
     expect(specs.find((spec) => spec.key.endsWith("history-7d.json"))?.cacheControl).toBe("public, max-age=300, must-revalidate");
+    expect(specs.find((spec) => spec.key.endsWith("history-summary-7d.json"))?.cacheControl).toBe("public, max-age=300, must-revalidate");
   });
 
   it("can select only latest json for realtime uploads", () => {
@@ -49,6 +55,7 @@ describe("R2 publisher", () => {
     mkdirSync(dataDir, { recursive: true });
     writeFileSync(join(dataDir, "latest.json"), "{}", { flag: "w" });
     writeFileSync(join(dataDir, "history-7d.json"), "[]", { flag: "w" });
+    writeFileSync(join(dataDir, "history-summary-7d.json"), "[]", { flag: "w" });
 
     expect(latestDataObjectSpecs(join(tempDir, "public"), "perp").map((spec) => spec.key)).toEqual(["perp/data/latest.json"]);
   });

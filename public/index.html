@@ -228,11 +228,11 @@
     let selectedPair = null;
     let latestState = null;
     let rowMapState = null;
-    let historyState = null;
+    let historySummaryState = null;
     let healthState = null;
 
-    loadData().then(([latest, history, summaries, health, anomalies]) => {
-        renderData(latest, history, summaries, health, anomalies);
+    loadData().then(([latest, historySummary, summaries, health, anomalies]) => {
+        renderData(latest, historySummary, summaries, health, anomalies);
         setInterval(refreshData, 60_000);
       });
 
@@ -243,14 +243,14 @@
         renderMarketTabs();
         if (latestState && rowMapState) renderComparison(latestState, rowMapState);
       }
-      if (historyState && healthState) renderDrilldown(historyState, healthState);
+      if (historySummaryState && healthState) renderDrilldown(historySummaryState, healthState);
     });
 
     function loadData(ts = null) {
       const suffix = ts ? "?ts=" + ts : "";
       return Promise.all([
         fetchJson("latest.json", suffix),
-        fetchJson("history-7d.json", suffix),
+        fetchJson("history-summary-7d.json", suffix),
         fetchJson("daily-summary.json", suffix),
         fetchJson("health.json", suffix),
         fetchJson("anomalies.json", suffix)
@@ -269,8 +269,8 @@
       refreshInFlight = true;
       const ts = Date.now();
       loadData(ts)
-        .then(([latest, history, summaries, health, anomalies]) => {
-          renderData(latest, history, summaries, health, anomalies);
+        .then(([latest, historySummary, summaries, health, anomalies]) => {
+          renderData(latest, historySummary, summaries, health, anomalies);
         })
         .catch(() => {
           const freshness = document.getElementById("freshness");
@@ -281,14 +281,14 @@
         });
     }
 
-    function renderData(latest, history, summaries, health, anomalies) {
+    function renderData(latest, historySummary, summaries, health, anomalies) {
       latestState = latest;
-      historyState = history;
+      historySummaryState = historySummary;
       healthState = health;
       renderLatest(latest);
       renderHealth(health);
       renderSummaries(summaries);
-      renderDrilldown(history, health);
+      renderDrilldown(historySummary, health);
       renderAnomalies(anomalies);
     }
 
@@ -391,7 +391,7 @@
           event.preventDefault();
           selectedPair = link.dataset.pair;
           location.hash = selectedPair;
-          if (historyState && healthState) renderDrilldown(historyState, healthState);
+          if (historySummaryState && healthState) renderDrilldown(historySummaryState, healthState);
           document.getElementById("history-title").scrollIntoView({ behavior: "smooth", block: "start" });
         };
       });
@@ -484,10 +484,10 @@
       return String(status ?? "unknown").split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
     }
 
-    function renderDrilldown(history, health) {
-      const validRows = history.filter((row) => row.valid !== 0 && row.spread_bp !== null);
-      document.getElementById("history-note").textContent = validRows.length
-        ? validRows.length + " valid 15 minute rollup buckets in the exported 7 day window."
+    function renderDrilldown(historySummary, health) {
+      const validBucketCount = historySummary.reduce((sum, row) => sum + (row.rollup_bucket_count ?? 0), 0);
+      document.getElementById("history-note").textContent = validBucketCount
+        ? validBucketCount + " valid 15 minute rollup buckets in the exported 7 day window."
         : "No valid metric samples in the exported 7 day window yet.";
       const pairs = displayVenues.flatMap((venue) => visibleMarkets.map((market) => ({ venue, market })));
       const hashPair = location.hash ? location.hash.slice(1) : "";
@@ -500,29 +500,25 @@
       const updatePair = () => {
         selectedPair = marketSelect.value + ":" + venueSelect.value;
         location.hash = selectedPair;
-        renderDrilldown(history, health);
+        renderDrilldown(historySummary, health);
       };
       marketSelect.onchange = updatePair;
       venueSelect.onchange = updatePair;
-      const rows = validRows.filter((row) => row.market === market && row.venue === venue);
-      const expectedBuckets = Math.max(1, Math.ceil((7 * 24 * 60) / 15));
-      const missingSamples = Math.max(0, expectedBuckets - rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0));
-      const insufficient100k = rows.reduce((sum, row) => sum + (row.insufficient_depth_100k_count ?? 0), 0);
-      const insufficient1m = rows.reduce((sum, row) => sum + (row.insufficient_depth_1m_count ?? 0), 0);
+      const row = historySummary.find((item) => item.market === market && item.venue === venue) ?? {};
       document.getElementById("history").innerHTML =
         "<div class='history-panel'>" +
           "<h3>" + market + " / " + labels[venue] + "</h3>" +
           "<dl>" +
-            historyStat("Rollup buckets", rows.length) +
-            historyStat("Samples", rows.reduce((sum, row) => sum + (row.sample_count ?? 0), 0)) +
-            historyStat("Missing samples", missingSamples) +
-            historyStat("Insufficient-depth", insufficient100k + insufficient1m) +
-            historyStat("Median spread", fmt(median(rows.map((row) => row.spread_bp)), 3) + " bp") +
-            historyStat("Median 10bp depth", "$" + fmt(median(rows.map((row) => row.depth_10bp_total_usd)), 0)) +
-            historyStat("Median 5bp depth", "$" + fmt(median(rows.map((row) => row.depth_5bp_total_usd)), 0)) +
-            historyStat("Median 3bp depth", "$" + fmt(median(rows.map((row) => row.depth_3bp_total_usd)), 0)) +
-            historyStat("Median 100k slippage", fmt(median(rows.map((row) => row.avg_slippage_100k_bp)), 3) + " bp") +
-            historyStat("Median 1M slippage", fmt(median(rows.map((row) => row.avg_slippage_1m_bp)), 3) + " bp") +
+            historyStat("Rollup buckets", row.rollup_bucket_count ?? 0) +
+            historyStat("Samples", row.sample_count ?? 0) +
+            historyStat("Missing samples", row.missing_sample_count ?? 0) +
+            historyStat("Insufficient-depth", row.insufficient_depth_count ?? 0) +
+            historyStat("Median spread", fmt(row.spread_bp, 3) + " bp") +
+            historyStat("Median 10bp depth", "$" + fmt(row.depth_10bp_total_usd, 0)) +
+            historyStat("Median 5bp depth", "$" + fmt(row.depth_5bp_total_usd, 0)) +
+            historyStat("Median 3bp depth", "$" + fmt(row.depth_3bp_total_usd, 0)) +
+            historyStat("Median 100k slippage", fmt(row.avg_slippage_100k_bp, 3) + " bp") +
+            historyStat("Median 1M slippage", fmt(row.avg_slippage_1m_bp, 3) + " bp") +
           "</dl>" +
         "</div>";
     }
@@ -542,12 +538,6 @@
       ).join("");
     }
 
-    function median(values) {
-      const nums = values.filter((value) => typeof value === "number" && Number.isFinite(value)).sort((a, b) => a - b);
-      if (!nums.length) return null;
-      const mid = Math.floor(nums.length / 2);
-      return nums.length % 2 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
-    }
   </script>
 </body>
 </html>

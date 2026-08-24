@@ -16,6 +16,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
   - `public/data/latest.json`
   - `public/data/health.json`
   - `public/data/history-7d.json`
+  - `public/data/history-summary-7d.json`
   - `public/data/daily-summary.json`
   - `public/data/anomalies.json`
 
@@ -42,6 +43,7 @@ This checklist tracks the evidence needed before calling the benchmark publicly 
    - Command: `npm run run:benchmark -- --collect-interval 60 --latest-export-interval 60 --history-export-interval 300 --concurrency 4`
    - Evidence: `public/data/latest.json` updates every collector round.
    - Evidence: `public/data/history-7d.json` contains 15 minute rollup buckets over time.
+   - Evidence: `public/data/history-summary-7d.json` contains compact per venue/market aggregates used by the public drilldown.
    - Evidence: `data/benchmark.sqlite` is stored on persistent disk.
    - Evidence: workflow `Benchmark Pages` run `26623179905` completed successfully.
    - Evidence: workflow file `.github/workflows/benchmark-pages.yml` can publish `public/`, but GitHub schedule is not treated as the source of truth for realtime collection.

@@ -13,7 +13,7 @@ afterEach(() => {
 });
 
 describe("static export", () => {
-  it("writes index, methodology, latest, health, history, summary, and anomalies files", () => {
+  it("writes index, methodology, latest, health, history, history summary, daily summary, and anomalies files", () => {
     tempDir = mkdtempSync(join(tmpdir(), "perp-export-"));
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
@@ -31,7 +31,8 @@ describe("static export", () => {
     expect(index).toContain("edgeX");
     expect(index).toContain('document.getElementById("market-live").textContent = validCount + "/" + benchmarkVenues.length + " benchmark live"');
     expect(index).toContain("Venue / Market Drilldown");
-    expect(index).toContain('fetchJson("history-7d.json", suffix)');
+    expect(index).toContain('fetchJson("history-summary-7d.json", suffix)');
+    expect(index).not.toContain('fetchJson("history-7d.json", suffix)');
     expect(index).toContain("id=\"history\"");
     expect(index).toContain("Daily Summary");
     expect(index).toContain('fetchJson("daily-summary.json", suffix)');
@@ -57,6 +58,7 @@ describe("static export", () => {
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("standx");
     expect(readFileSync(join(tempDir, "public", "data", "health.json"), "utf8")).toContain("expectedTargetCount");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toContain("[]");
+    expect(readFileSync(join(tempDir, "public", "data", "history-summary-7d.json"), "utf8")).toContain("[]");
     db.close();
   });
 
@@ -183,8 +185,10 @@ describe("static export", () => {
 
     const latest = readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8");
     const history = readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8");
+    const historySummary = readFileSync(join(tempDir, "public", "data", "history-summary-7d.json"), "utf8");
     expect(latest).not.toContain("aevo");
     expect(history).not.toContain("aevo");
+    expect(historySummary).not.toContain("aevo");
     db.close();
   });
 
@@ -330,13 +334,19 @@ describe("static export", () => {
     const db = new BenchmarkDb(join(tempDir, "test.sqlite"));
     db.initialize();
     const baseMs = Date.parse("2026-05-29T08:00:00.000Z");
-    for (const [index, spread] of [3, 1, 2].entries()) {
+    const samples = [
+      { minute: 0, spread: 3, insufficient1m: false },
+      { minute: 1, spread: 1, insufficient1m: false },
+      { minute: 2, spread: 2, insufficient1m: false },
+      { minute: 16, spread: 4, insufficient1m: true }
+    ];
+    for (const { minute, spread, insufficient1m } of samples) {
       const snapshotId = db.insertSnapshot({
         venue: "hyperliquid",
         market: "BTC",
         symbol: "BTC",
         source: "fixture",
-        localTimestampMs: baseMs + index * 60_000,
+        localTimestampMs: baseMs + minute * 60_000,
         sourceTimestampMs: null,
         latencyMs: 1,
         bidCount: 1,
@@ -349,7 +359,7 @@ describe("static export", () => {
         venue: "hyperliquid",
         market: "BTC",
         symbol: "BTC",
-        localTimestampMs: baseMs + index * 60_000,
+        localTimestampMs: baseMs + minute * 60_000,
         midPrice: 100,
         spreadBp: spread,
         depth3BpBidUsd: 300 + spread,
@@ -365,19 +375,20 @@ describe("static export", () => {
         sellSlippage100kBp: spread,
         avgSlippage100kBp: spread,
         insufficientDepth100k: false,
-        buySlippage1mBp: spread + 10,
-        sellSlippage1mBp: spread + 10,
-        avgSlippage1mBp: spread + 10,
-        insufficientDepth1m: false,
+        buySlippage1mBp: insufficient1m ? null : spread + 10,
+        sellSlippage1mBp: insufficient1m ? null : spread + 10,
+        avgSlippage1mBp: insufficient1m ? null : spread + 10,
+        insufficientDepth1m: insufficient1m,
         valid: true,
         error: null
       });
     }
 
-    exportHistoryData(db, join(tempDir, "public"), { nowMs: baseMs + 10 * 60_000 });
+    exportHistoryData(db, join(tempDir, "public"), { nowMs: baseMs + 20 * 60_000 });
     const history = JSON.parse(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8"));
+    const historySummary = JSON.parse(readFileSync(join(tempDir, "public", "data", "history-summary-7d.json"), "utf8"));
 
-    expect(history).toHaveLength(1);
+    expect(history).toHaveLength(2);
     expect(history[0]).toMatchObject({
       venue: "hyperliquid",
       market: "BTC",
@@ -389,6 +400,20 @@ describe("static export", () => {
       avg_slippage_100k_bp: 2,
       avg_slippage_1m_bp: 12
     });
+    expect(historySummary).toEqual([{
+      venue: "hyperliquid",
+      market: "BTC",
+      rollup_bucket_count: 2,
+      sample_count: 4,
+      missing_sample_count: 668,
+      insufficient_depth_count: 1,
+      spread_bp: 3,
+      depth_3bp_total_usd: 603,
+      depth_5bp_total_usd: 1003,
+      depth_10bp_total_usd: 2003,
+      avg_slippage_100k_bp: 3,
+      avg_slippage_1m_bp: 12
+    }]);
     db.close();
   });
 
@@ -398,11 +423,13 @@ describe("static export", () => {
     db.initialize();
     exportStaticSite(db, join(tempDir, "public"));
     const beforeHistory = readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8");
+    const beforeHistorySummary = readFileSync(join(tempDir, "public", "data", "history-summary-7d.json"), "utf8");
 
     exportLatestData(db, join(tempDir, "public"));
 
     expect(readFileSync(join(tempDir, "public", "data", "latest.json"), "utf8")).toContain("generatedAt");
     expect(readFileSync(join(tempDir, "public", "data", "history-7d.json"), "utf8")).toBe(beforeHistory);
+    expect(readFileSync(join(tempDir, "public", "data", "history-summary-7d.json"), "utf8")).toBe(beforeHistorySummary);
     db.close();
   });
 
@@ -419,10 +446,11 @@ describe("static export", () => {
     expect(index).toContain("if (refreshInFlight) return");
     expect(index).toContain("const ts = Date.now()");
     expect(index).toContain("loadData(ts)");
-    expect(index).toContain("renderData(latest, history, summaries, health, anomalies)");
+    expect(index).toContain("renderData(latest, historySummary, summaries, health, anomalies)");
     expect(index).toContain("refreshInFlight = false");
     expect(index).toContain('fetchJson("latest.json", suffix)');
-    expect(index).toContain('fetchJson("history-7d.json", suffix)');
+    expect(index).toContain('fetchJson("history-summary-7d.json", suffix)');
+    expect(index).not.toContain('fetchJson("history-7d.json", suffix)');
     expect(index).toContain('fetchJson("daily-summary.json", suffix)');
     expect(index).toContain('fetchJson("health.json", suffix)');
     expect(index).toContain('fetchJson("anomalies.json", suffix)');
@@ -438,7 +466,7 @@ describe("static export", () => {
 
     const index = readFileSync(join(tempDir, "public", "index.html"), "utf8");
     expect(index).toContain("Venue / Market Drilldown");
-    expect(index).toContain("function renderDrilldown(history, health)");
+    expect(index).toContain("function renderDrilldown(historySummary, health)");
     expect(index).toContain("selectedPair");
     expect(index).toContain("drilldown-market");
     expect(index).toContain("drilldown-venue");

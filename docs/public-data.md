@@ -9,6 +9,7 @@ There is no login, private feed, CSV export, or interactive API in this mileston
 - `data/latest.json`: latest target list and latest comparable metric rows.
 - `data/health.json`: freshness, count, and per venue/market status summary.
 - `data/history-7d.json`: 15 minute rollups from persistent SQLite history.
+- `data/history-summary-7d.json`: compact 7 day venue/market aggregates used by the public drilldown.
 - `data/daily-summary.json`: copyable daily market notes generated from stored metrics.
 - `data/anomalies.json`: public anomaly events that can be linked, quoted, or sent to Telegram.
 
@@ -18,6 +19,7 @@ There is no login, private feed, CSV export, or interactive API in this mileston
 - `latestSampleTimestampMs` is the newest collected snapshot timestamp represented in health data.
 - `latestSampleAgeSeconds` is computed at export time from `latestSampleTimestampMs`.
 - `history-7d.json` is a rollup of stored SQLite samples, not a one-shot CI snapshot.
+- `history-summary-7d.json` is generated from `history-7d.json` at the same time and does not replace the detailed public history contract.
 - Cache TTLs may differ by host. Treat `health.json` and `latest.json` as the freshness checks before citing a rank.
 
 ## Status Semantics
@@ -37,6 +39,8 @@ Missing, failed, not-listed, and insufficient-depth states are part of the bench
 - `avg_slippage_100k_bp`, `avg_slippage_1m_bp`: average estimated taker slippage in basis points for 100,000 USD and 1,000,000 USD orders.
 - `sample_count`: number of raw samples rolled into a 15 minute history bucket.
 - `insufficient_depth_100k_count` and `insufficient_depth_1m_count`: count of raw samples in the rollup bucket where the public book could not fill the target notional.
+
+Each `history-summary-7d.json` row contains `venue`, `market`, `rollup_bucket_count`, `sample_count`, `missing_sample_count`, `insufficient_depth_count`, and the 7 day median values displayed by the public drilldown. Only venue/market pairs with comparable history are included.
 
 `null` means the metric is not comparable for that row or bucket.
 

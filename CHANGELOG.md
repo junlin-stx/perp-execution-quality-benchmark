@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added a compact 7 day history summary for the public drilldown while preserving the detailed `history-7d.json` public data contract.
 - Migrated edgeX collection to the V2 public depth API and current contract ids, with empty-book rejection to prevent invalid samples from being recorded as successful collections.
 - Improved Hyperliquid 3bp/5bp/10bp coverage with progressively aggregated public books and coverage-aware band selection.
 - Added XAU across all eight venues using each venue's live public symbol or product id.
